@@ -5,6 +5,8 @@ import com.smartfoxserver.v2.core.ISFSEvent;
 import com.smartfoxserver.v2.core.SFSEventParam;
 import com.smartfoxserver.v2.entities.Room;
 import com.smartfoxserver.v2.entities.User;
+import com.smartfoxserver.v2.entities.data.ISFSObject;
+import com.smartfoxserver.v2.entities.data.SFSObject;
 import com.smartfoxserver.v2.exceptions.SFSException;
 import com.smartfoxserver.v2.extensions.BaseServerEventHandler;
 import sfs2x.model.Global;
@@ -18,6 +20,8 @@ public class ZoneJoinedHandler extends BaseServerEventHandler{
         System.out.println("---------->用户加入到zone");
         User user = (User) isfsEvent.getParameter(SFSEventParam.USER);
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
+        if (player.getAgentID() == 0)
+            send("setAgent",null,user);
         if (SFSUtil.offlinePlayer.containsKey(player.getUserID())){
             Room room = SFSUtil.offlinePlayer.get(player.getUserID());
             if (room != null){

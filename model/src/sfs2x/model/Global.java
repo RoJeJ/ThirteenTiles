@@ -21,7 +21,7 @@ public class Global {
     public static final long PRESENT = 8;
 
 
-    public static final int WAITREADY = 20;
+    public static final int WAITREADY = 60;
     public static final  int CARD = 1;
 
     public static final int FRONT_THREE_SAME = 3;

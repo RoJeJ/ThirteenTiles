@@ -11,6 +11,7 @@ import sfs2x.model.Player;
 import sfs2x.model.utils.DBUtil;
 
 import java.sql.*;
+import java.util.Iterator;
 
 public class LoginZoneHandler extends BaseServerEventHandler {
     @Override
@@ -51,22 +52,24 @@ public class LoginZoneHandler extends BaseServerEventHandler {
             stm = con.prepareStatement("SELECT Nullity FROM UserInfo WHERE Accounts = '" + username + "' COLLATE Chinese_PRC_CS_AI_WS", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
             ResultSet resultSet = stm.executeQuery();
-            if ((resultSet.next()) && (resultSet.getInt(1) == 1))
+            if (resultSet.next())
             {
-                SFSErrorData errorData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-                errorData.addParameter("用户被禁止登录!");
-                IErrorCode nCode = new IErrorCode()
-                {
-                    public short getId()
+                if (resultSet.getInt(1) == 1){
+                    SFSErrorData errorData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
+                    errorData.addParameter("用户被禁止登录!");
+                    IErrorCode nCode = new IErrorCode()
                     {
-                        return 998;
-                    }
-                };
-                errorData.setCode(nCode);
-                throw new SFSLoginException("login error", errorData);
+                        public short getId()
+                        {
+                            return 998;
+                        }
+                    };
+                    errorData.setCode(nCode);
+                    throw new SFSLoginException("login error", errorData);
+                }
             }
             resultSet.close();
-            stm = con.prepareStatement("UPDATE UserInfo SET NickName = '" + nickname + "',Gender = " + sex + ",FaceUrl = '" + faceUrl + "',IP = '" + ip + "',LastLogonDate = '" + new Timestamp(System.currentTimeMillis()) + "' WHERE Accounts = '" + username + "'");
+            stm = con.prepareStatement("UPDATE UserInfo SET NickName = '" + nickname + "',Gender = " + sex + ",FaceUrl = '" + faceUrl + "', IP = '" + ip + "',LastLogonDate = '" + new Timestamp(System.currentTimeMillis()) + "' WHERE Accounts = '" + username + "'");
 
             stm.execute();
 
@@ -78,7 +81,7 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                 {
                     Player player = new Player();
                     player.setUserID(rs.getInt("UserID"));
-
+                    player.setAgentID(rs.getInt("ParentID"));
                     player.setDiamond(rs.getLong("Diamond"));
                     player.setGameCard(rs.getLong("GameCard"));
                     player.setScore(rs.getLong("Score"));
@@ -88,7 +91,8 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                     player.setName(rs.getString("NickName"));
                     session.setProperty("player", player);
                     session.setProperty("$permission", DefaultPermissionProfile.STANDARD);
-                    rs.close(); return;
+                    rs.close();
+                    return;
                 }
                 throw new SFSLoginException("a sql error occurred", new SFSErrorData(SFSErrorCode.GENERIC_ERROR));
             }
@@ -135,7 +139,10 @@ public class LoginZoneHandler extends BaseServerEventHandler {
         if (con != null) {
             try
             {
-                stm = con.prepareStatement("INSERT INTO UserInfo (Accounts, NickName, Gender,FaceUrl, IP, Nullity, MemberOrder, GameCard, Diamond, Score, WinCount, LostCount, DrawCount, FleeCount,RegisterDate,ShareDate, LastLogonDate, LastLogoutDate) VALUES ('" + username + "','" + nickname + "','" + sex + "','" + faceurl + "','" + ip + "',0,0," + 8L + ",0,0,0,0,0,0,'" + new Timestamp(System.currentTimeMillis()).toString() + "',NULL ,NULL ,NULL )");
+                stm = con.prepareStatement("INSERT INTO UserInfo (Accounts, NickName, Gender,FaceUrl, IP, " +
+                        "Nullity, MemberOrder, GameCard, Diamond, Score, WinCount, LostCount, DrawCount, FleeCount,RegisterDate,ShareDate, LastLogonDate, LastLogoutDate) " +
+                        "VALUES ('" + username + "','" + nickname + "','" + sex + "','" + faceurl + "','" + ip
+                        + "',0,0," + 8L + ",0,0,0,0,0,0,'" + new Timestamp(System.currentTimeMillis()).toString() + "',NULL ,NULL ,NULL )");
 
                 stm.execute();
             }

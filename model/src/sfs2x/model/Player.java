@@ -23,6 +23,7 @@ public class Player{
     private long GameCard;
     private long Score;
 
+
     public String getName() {
         return name;
     }
@@ -46,6 +47,7 @@ public class Player{
     private User user;
     private int gender;
     private GameVariable gameVar;
+    private int agentID;
 
     public GameVariable getGameVar() {
         return gameVar;
@@ -267,4 +269,13 @@ public class Player{
     public void setScore(long score) {
         Score = score;
     }
+
+    public int getAgentID() {
+        return agentID;
+    }
+
+    public void setAgentID(int agentID) {
+        this.agentID = agentID;
+    }
+
 }

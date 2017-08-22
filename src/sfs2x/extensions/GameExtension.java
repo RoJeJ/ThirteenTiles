@@ -2,14 +2,17 @@ package sfs2x.extensions;
 
 import com.smartfoxserver.v2.core.SFSEventType;
 import com.smartfoxserver.v2.entities.Room;
+import com.smartfoxserver.v2.entities.User;
 import com.smartfoxserver.v2.extensions.SFSExtension;
 import sfs2x.handler.room.DisconnectInRoom;
 import sfs2x.handler.room.JoinRoomHandler;
 import sfs2x.handler.room.LeaveRoomHandler;
 import sfs2x.handler.room.RoomResponseHandler;
 import sfs2x.logic.MainGame;
+import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.Table;
+import sfs2x.model.utils.DBUtil;
 import sfs2x.model.utils.SFSUtil;
 
 import java.util.Timer;
@@ -81,8 +84,8 @@ public class GameExtension extends SFSExtension {
         return this.mainGame;
     }
 
-    public void init()
-    {
+    @Override
+    public void init() {
         this.room = getParentRoom();
         int count = this.room.getVariable("count").getIntValue();
         int person = this.room.getVariable("person").getIntValue();
@@ -108,12 +111,16 @@ public class GameExtension extends SFSExtension {
         addRequestHandler("game", RoomResponseHandler.class);
     }
 
-    public void destroy()
-    {
+    @Override
+    public void destroy() {
         trace("GameExtension is destroyed");
         this.GameTimer.cancel();
         this.waitOutTimer.cancel();
         this.exitTimer.cancel();
+        for (User user: getParentZone().getUserList()){
+            Player player = (Player) user.getSession().getProperty(Global.PLAYER);
+            DBUtil.setOffline(player);
+        }
         super.destroy();
     }
 

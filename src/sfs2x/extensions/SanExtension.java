@@ -20,8 +20,8 @@ public class SanExtension extends SFSExtension {
             Global.roomNames5.add(i);
         addEventHandler(SFSEventType.USER_LOGIN,LoginZoneHandler.class);
         addEventHandler(SFSEventType.USER_JOIN_ZONE,ZoneJoinedHandler.class);
-//      addEventHandler(SFSEventType.USER_DISCONNECT,Disconnect.class);
-//      addEventHandler(SFSEventType.USER_LOGOUT,Disconnect.class);
+      addEventHandler(SFSEventType.USER_DISCONNECT,Disconnect.class);
+      addEventHandler(SFSEventType.USER_LOGOUT,Disconnect.class);
         addRequestHandler("cmd",ZoneResponseHandler.class);
         addEventHandler(SFSEventType.ROOM_REMOVED,RoomRemovedHandler.class);
 }

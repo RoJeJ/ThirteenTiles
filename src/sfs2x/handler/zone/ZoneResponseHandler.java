@@ -13,7 +13,6 @@ import com.smartfoxserver.v2.exceptions.SFSCreateRoomException;
 import com.smartfoxserver.v2.exceptions.SFSJoinRoomException;
 import com.smartfoxserver.v2.extensions.BaseClientRequestHandler;
 import com.smartfoxserver.v2.extensions.SFSExtension;
-import sfs2x.extensions.GameExtension;
 import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.Table;
@@ -39,6 +38,8 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
             send("ping",null,user);
         }else if (cmd.equals("update")){
             DBUtil.queryGameCardAndDiamond(getParentExtension(),player);
+        }else if (cmd.equals("agent")){
+            send("agent",DBUtil.setAgent(player,isfsObject.getInt("agentID")),user);
         }
 //        else if (cmd.equals("matching")){
 //            match(user);
@@ -96,7 +97,6 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
             }
         }
     }
-
     private void presentCard(Player p){
         try {
             Connection connection = DBUtil.getConnection(DBUtil.ThirteenTilesDB);

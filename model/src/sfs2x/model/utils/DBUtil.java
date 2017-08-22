@@ -1,5 +1,6 @@
 package sfs2x.model.utils;
 
+import com.smartfoxserver.v2.entities.data.ISFSObject;
 import com.smartfoxserver.v2.entities.data.SFSObject;
 import com.smartfoxserver.v2.extensions.SFSExtension;
 import sfs2x.model.Player;
@@ -25,6 +26,7 @@ public class DBUtil {
         }
         return connection;
     }
+
 
     //查询房卡和钻石
     public static void queryGameCardAndDiamond(SFSExtension extension,Player player) {
@@ -138,6 +140,61 @@ public class DBUtil {
                     connection.close();
                 if (stmt != null && !stmt.isClosed())
                     stmt.close();
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static ISFSObject setAgent(Player player, int agentID) {
+        ISFSObject object = new SFSObject();
+        Connection connection = getConnection(ThirteenTilesDB);
+        PreparedStatement statement = null;
+        try {
+             statement = connection.prepareStatement("SELECT id FROM xy_agent WHERE snid = "+agentID);
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()){
+                int id = rs.getInt(1);
+                statement.close();
+                statement = connection.prepareStatement("UPDATE UserInfo SET ParentID = "+id+" WHERE ParentID = 0 AND UserID = "+player.getUserID());
+                if (statement.executeUpdate() == 1) {
+                    player.setAgentID(agentID);
+                    object.putBool("code",true);
+                    return object;
+                }
+            }
+            object.putBool("code",false);
+            return object;
+        }catch (SQLException e){
+            object.putBool("code",false);
+            return object;
+        }finally {
+            try {
+                connection.close();
+                if (statement != null)
+                    statement.close();
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //设置离线
+    public static boolean setOffline(Player player){
+        Connection connection = getConnection(ThirteenTilesDB);
+        PreparedStatement statement = null;
+        try {
+            statement = connection.prepareStatement("UPDATE UserInfo SET LastLogoutDate = '"+new Timestamp(System.currentTimeMillis())+"' WHERE UserID = "+player.getUserID());
+            return statement.executeUpdate() == 1;
+        }catch (SQLException e){
+            e.printStackTrace();
+            return false;
+        }finally {
+            try {
+                if (!connection.isClosed())
+                    connection.close();
+                if (statement != null && !statement.isClosed())
+                    statement.close();
             }catch (SQLException e){
                 e.printStackTrace();
             }
