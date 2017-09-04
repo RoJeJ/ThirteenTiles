@@ -6,14 +6,15 @@ import java.util.HashMap;
 
 public class Global {
     public static final String PLAYER = "player";
-    public static ArrayList<Integer> roomNames2 = new ArrayList<Integer>();
-    public static ArrayList<Integer> roomNames3 = new ArrayList<Integer>();
-    public static ArrayList<Integer> roomNames4 = new ArrayList<Integer>();
-    public static ArrayList<Integer> roomNames5 = new ArrayList<Integer>();
+    public static String USERINFO_URI = "https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s";
+    public static ArrayList<Integer> roomNames2 = new ArrayList<>();
+    public static ArrayList<Integer> roomNames3 = new ArrayList<>();
+    public static ArrayList<Integer> roomNames4 = new ArrayList<>();
+    public static ArrayList<Integer> roomNames5 = new ArrayList<>();
     public static final String RECOVERLOCK = "lock";
     public static final String TABLE = "table";
     public static final long EXIT_TIME = 3*60*1000;
-    public static final long WAIT_TIMEOUT = 10*60*1000;
+    public static final int WAIT_TIMEOUT = 10*60*1000;
     public static final int SET_PAI = 3*60;
     public static final int HEAD = 1;
     public static final int MIDDLE = 1;

@@ -2,116 +2,131 @@ package sfs2x.handler.zone;
 
 import com.smartfoxserver.bitswarm.sessions.ISession;
 import com.smartfoxserver.v2.core.ISFSEvent;
+import com.smartfoxserver.v2.core.SFSConstants;
 import com.smartfoxserver.v2.core.SFSEventParam;
 import com.smartfoxserver.v2.entities.data.ISFSObject;
 import com.smartfoxserver.v2.exceptions.*;
 import com.smartfoxserver.v2.extensions.BaseServerEventHandler;
 import com.smartfoxserver.v2.security.DefaultPermissionProfile;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.json.JSONObject;
+import sfs2x.extensions.SanExtension;
+import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.utils.DBUtil;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URI;
 import java.sql.*;
-import java.util.Iterator;
 
 public class LoginZoneHandler extends BaseServerEventHandler {
     @Override
     public synchronized void handleServerEvent(ISFSEvent isfsEvent) throws SFSException {
-        System.out.println("---------->用户开始登录zone");
-        String username = (String)isfsEvent.getParameter(SFSEventParam.LOGIN_NAME);
+//        System.out.println("---------->用户开始登录zone");
+        String openid = (String)isfsEvent.getParameter(SFSEventParam.LOGIN_NAME);
         String password = (String)isfsEvent.getParameter(SFSEventParam.LOGIN_PASSWORD);
         ISFSObject data = (ISFSObject)isfsEvent.getParameter(SFSEventParam.LOGIN_IN_DATA);
-        String nickname = data.getUtfString("nickname");
-        int sex = data.getInt("sex");
-        String faceUrl = data.getUtfString("headimgurl");
+//        System.out.println("openid:"+openid);
+        String token = data.getUtfString("token");
+//        System.out.println("token:"+token);
         ISession session = (ISession)isfsEvent.getParameter(SFSEventParam.SESSION);
-        String ip = session.getAddress();
+        String ip = session.getAddress().trim();
+        String url = String.format(Global.USERINFO_URI,token,openid);
+        ISFSObject outData = (ISFSObject) isfsEvent.getParameter(SFSEventParam.LOGIN_OUT_DATA);
 
-        Connection con = null;
-        PreparedStatement stm = null;
-        try
-        {
-            if ((getApi().checkSecurePassword(session, "ll19891735", password)) &&
-                    (!isExistAccount(username))) {
-                addReg(username, nickname, sex, faceUrl, ip);
-            }
-            con = DBUtil.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ThirteenTilesDB");
-            if (con == null)
-            {
-                SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-                errData.addParameter("SQL Error: missing connection");
-                IErrorCode nCode = new IErrorCode()
-                {
-                    public short getId()
-                    {
-                        return 999;
+        Connection con = DBUtil.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ThirteenTilesDB");
+        CallableStatement stm = null;
+        try {
+            if ((getApi().checkSecurePassword(session, "ll19891735", password))) {
+                HttpGet get = new HttpGet(URI.create(url));
+                HttpResponse response = SanExtension.httpClient.execute(get);
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
+                    StringBuilder builder = new StringBuilder();
+                    for (String temp = reader.readLine(); temp != null; temp = reader.readLine()) {
+                        builder.append(temp);
                     }
-                };
-                errData.setCode(nCode);
-                throw new SFSLoginException("A SQL Error occurred: missing connection", errData);
-            }
-            stm = con.prepareStatement("SELECT Nullity FROM UserInfo WHERE Accounts = '" + username + "' COLLATE Chinese_PRC_CS_AI_WS", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                    get.abort();
+                    JSONObject jsonObject = new JSONObject(builder.toString().trim());
+                    if (jsonObject.has("errcode")) {
+                        SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
+                        errData.addParameter("token_expire");
+                        throw new SFSLoginException("token_expire", errData);
+                    } else {
+                        openid = jsonObject.getString("openid").trim();
+                        String nickname = jsonObject.getString("nickname").trim();
+                        int sex = jsonObject.getInt("sex");
+                        String language = jsonObject.getString("language").trim();
+                        String city = jsonObject.getString("city").trim();
+                        String province = jsonObject.getString("province").trim();
+                        String country = jsonObject.getString("country").trim();
+                        String headimgurl = jsonObject.getString("headimgurl").trim();
+                        String unionid = jsonObject.getString("unionid").trim();
 
-            ResultSet resultSet = stm.executeQuery();
-            if (resultSet.next())
-            {
-                if (resultSet.getInt(1) == 1){
-                    SFSErrorData errorData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-                    errorData.addParameter("用户被禁止登录!");
-                    IErrorCode nCode = new IErrorCode()
-                    {
-                        public short getId()
-                        {
-                            return 998;
+                        stm = con.prepareCall("{? = call UpdateAccounts (?,?,?,?,?,?,?,?,?,?)}");
+                        stm.registerOutParameter(1, Types.INTEGER);
+                        stm.setString(2, openid);
+                        stm.setString(3, nickname);
+                        stm.setInt(4, sex);
+                        stm.setString(5, country);
+                        stm.setString(6, province);
+                        stm.setString(7, city);
+                        stm.setString(8, language);
+                        stm.setString(9, headimgurl);
+                        stm.setString(10, unionid);
+                        stm.setString(11, ip);
+
+                        if (stm.execute()) {
+                            ResultSet resultSet = stm.getResultSet();
+                            if (resultSet.next()) {
+                                int nullity = resultSet.getInt("nullity");
+                                if (nullity == 0){
+//                                    Player player = new Player();
+//                                    player.setUserID(resultSet.getInt("userid"));
+//                                    player.setAgentID(resultSet.getInt("AgentID"));
+//                                    player.setDiamond(resultSet.getLong("Diamond"));
+//                                    player.setGameCard(resultSet.getLong("card"));
+//                                    player.setScore(resultSet.getLong("score"));
+//                                    player.setFaceUrl(headimgurl);
+//                                    player.setIp(ip);
+//                                    player.setGender(resultSet.getInt("sex"));
+//                                    player.setName(resultSet.getString("nickname"));
+
+                                    session.setProperty("userid",resultSet.getInt("userid"));
+                                    session.setProperty("nickname",resultSet.getString("nickname"));
+                                    session.setProperty("sex",resultSet.getInt("sex"));
+                                    session.setProperty("faceurl",resultSet.getString("faceurl"));
+                                    session.setProperty("ip",ip);
+                                    session.setProperty("score",resultSet.getLong("score"));
+                                    session.setProperty("card",resultSet.getLong("card"));
+                                    session.setProperty("diamond",resultSet.getLong("Diamond"));
+                                    session.setProperty("agentid",resultSet.getInt("AgentID"));
+
+//                                    session.setProperty(Global.PLAYER, player);
+                                    session.setProperty("$permission", DefaultPermissionProfile.STANDARD);
+
+                                    String userName = String.format(nickname+"[%d]",session.getProperty("userid"));
+                                    outData.putUtfString(SFSConstants.NEW_LOGIN_NAME,userName);
+                                    resultSet.close();
+                                    return;
+                                }else {
+                                    SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_BANNED_USER);
+                                    errData.addParameter("用户被禁止登录");
+                                    throw new SFSLoginException("login refuse",new SFSErrorData(SFSErrorCode.LOGIN_BANNED_USER));
+                                }
+                            }
                         }
-                    };
-                    errorData.setCode(nCode);
-                    throw new SFSLoginException("login error", errorData);
+                    }
                 }
             }
-            resultSet.close();
-            stm = con.prepareStatement("UPDATE UserInfo SET NickName = '" + nickname + "',Gender = " + sex + ",FaceUrl = '" + faceUrl + "', IP = '" + ip + "',LastLogonDate = '" + new Timestamp(System.currentTimeMillis()) + "' WHERE Accounts = '" + username + "'");
-
-            stm.execute();
-
-            stm = con.prepareStatement("SELECT * FROM UserInfo WHERE Accounts = '" + username + "' COLLATE Chinese_PRC_CS_AI_WS", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            if (stm.execute())
-            {
-                ResultSet rs = stm.getResultSet();
-                if (rs.next())
-                {
-                    Player player = new Player();
-                    player.setUserID(rs.getInt("UserID"));
-                    player.setAgentID(rs.getInt("ParentID"));
-                    player.setDiamond(rs.getLong("Diamond"));
-                    player.setGameCard(rs.getLong("GameCard"));
-                    player.setScore(rs.getLong("Score"));
-                    player.setFaceUrl(faceUrl);
-                    player.setIp(ip);
-                    player.setGender(rs.getInt("Gender"));
-                    player.setName(rs.getString("NickName"));
-                    session.setProperty("player", player);
-                    session.setProperty("$permission", DefaultPermissionProfile.STANDARD);
-                    rs.close();
-                    return;
-                }
-                throw new SFSLoginException("a sql error occurred", new SFSErrorData(SFSErrorCode.GENERIC_ERROR));
+            throw new SFSLoginException("login error",new SFSErrorData(SFSErrorCode.GENERIC_ERROR));
+        } catch (Exception e) {
+            if (e instanceof SFSLoginException){
+                throw (SFSLoginException)e;
             }
-            throw new SFSLoginException("a sql error occurred", new SFSErrorData(SFSErrorCode.GENERIC_ERROR));
-        }
-        catch (Exception e)
-        {
             e.printStackTrace();
-            SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-            errData.addParameter("SQL Error: " + e.getMessage());
-            IErrorCode nCode = new IErrorCode()
-            {
-                public short getId()
-                {
-                    return 999;
-                }
-            };
-            errData.setCode(nCode);
-            throw new SFSLoginException("A SQL Error occurred: " + e.getMessage(), errData);
         }
         finally
         {
@@ -129,103 +144,6 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                 e.printStackTrace();
             }
         }
-    }
-
-    private void addReg(String username, String nickname, int sex, String faceurl, String ip)
-            throws SFSLoginException
-    {
-        PreparedStatement stm = null;
-        Connection con = DBUtil.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ThirteenTilesDB");
-        if (con != null) {
-            try
-            {
-                stm = con.prepareStatement("INSERT INTO UserInfo (Accounts, NickName, Gender,FaceUrl, IP, " +
-                        "Nullity, MemberOrder, GameCard, Diamond, Score, WinCount, LostCount, DrawCount, FleeCount,RegisterDate,ShareDate, LastLogonDate, LastLogoutDate) " +
-                        "VALUES ('" + username + "','" + nickname + "','" + sex + "','" + faceurl + "','" + ip
-                        + "',0,0," + 8L + ",0,0,0,0,0,0,'" + new Timestamp(System.currentTimeMillis()).toString() + "',NULL ,NULL ,NULL )");
-
-                stm.execute();
-            }
-            catch (SQLException e)
-            {
-                e.printStackTrace();
-                SFSErrorData errorData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-                throw new SFSLoginException("GENERIC_ERROR", errorData);
-            }
-            finally
-            {
-                try
-                {
-                    con.close();
-                    if (stm != null) {
-                        stm.close();
-                    }
-                }
-                catch (SQLException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private boolean isExistAccount(String username)
-            throws SFSLoginException
-    {
-        PreparedStatement statement = null;
-        ResultSet rs = null;
-        Connection con = DBUtil.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ThirteenTilesDB");
-        if (con != null) {
-            try
-            {
-                statement = con.prepareCall("SELECT UserID FROM UserInfo WHERE Accounts = '" + username + "' COLLATE Chinese_PRC_CS_AI_WS", 1005, 1007);
-
-                rs = statement.executeQuery();
-                return rs.first();
-            }
-            catch (SQLException e)
-            {
-                SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-                errData.addParameter("SQL Error: " + e.getMessage());
-                IErrorCode nCode = new IErrorCode()
-                {
-                    public short getId()
-                    {
-                        return 999;
-                    }
-                };
-                errData.setCode(nCode);
-                throw new SFSLoginException("A SQL Error occurred: " + e.getMessage(), errData);
-            }
-            finally
-            {
-                try
-                {
-                    con.close();
-                    if (statement != null) {
-                        statement.close();
-                    }
-                    if ((rs != null) && (!rs.isClosed())) {
-                        rs.close();
-                    }
-                }
-                catch (SQLException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        }
-        SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-        errData.addParameter("SQL Error: missing connection");
-        IErrorCode nCode = new IErrorCode()
-        {
-            public short getId()
-            {
-                return 999;
-            }
-        };
-        errData.setCode(nCode);
-        throw new SFSLoginException("A SQL Error occurred: missing connection", errData);
     }
 }
 

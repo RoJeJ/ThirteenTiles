@@ -1,6 +1,5 @@
 package sfs2x.handler.room;
 
-import com.smartfoxserver.v2.SmartFoxServer;
 import com.smartfoxserver.v2.annotations.MultiHandler;
 import com.smartfoxserver.v2.entities.Room;
 import com.smartfoxserver.v2.entities.User;
@@ -16,7 +15,6 @@ import sfs2x.model.utils.SFSUtil;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 @MultiHandler
 public class RoomResponseHandler extends BaseClientRequestHandler{
@@ -29,106 +27,119 @@ public class RoomResponseHandler extends BaseClientRequestHandler{
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
         String cmd = isfsObject.getUtfString(SFSExtension.MULTIHANDLER_REQUEST_ID);
 
-        if (cmd.equals("set")){
-            if (player.getGameVar().getSortPai() != 1)
-                return;
-            boolean gaff = isfsObject.getBool("gaff");
-            if (gaff){
-                if (player.getGameVar().getPreSpeType().type == PaiType.CT_INVALID){
-                    System.out.println("设置特殊牌失败");
-                    ISFSObject object =new SFSObject();
-                    object.putBool("set",false);
-                    send("set",object,user);
-                }else {
-                   player.getGameVar().setPaiType(0,player.getGameVar().getPreSpeType());
-                   player.getGameVar().setSortPai(2);
-                   ISFSObject object = new SFSObject();
-                   object.putBool("set",true);
-                   object.putInt("seat",table.getSeatNo(player));
-                   send("set",object,room.getUserList());
+        switch (cmd) {
+            case "set":
+                if (player.getGameVar().getSortPai() != 1)
+                    return;
+                boolean gaff = isfsObject.getBool("gaff");
+                if (gaff) {
+                    if (player.getGameVar().getPreSpeType().type == PaiType.CT_INVALID) {
+//                        System.out.println("设置特殊牌失败");
+                        ISFSObject object = new SFSObject();
+                        object.putBool("set", false);
+                        send("set", object, user);
+                    } else {
+                        player.getGameVar().setPaiType(0, player.getGameVar().getPreSpeType());
+                        player.getGameVar().setSortPai(2);
+                        ISFSObject object = new SFSObject();
+                        object.putBool("set", true);
+                        object.putInt("seat", table.getSeatNo(player));
+                        send("set", object, room.getUserList());
+                    }
+                } else {
+                    ArrayList<Integer> begin = (ArrayList<Integer>) isfsObject.getIntArray("head");
+                    ArrayList<Integer> middle = (ArrayList<Integer>) isfsObject.getIntArray("middle");
+                    ArrayList<Integer> end = (ArrayList<Integer>) isfsObject.getIntArray("tail");
+                    ISFSObject object = mainGame.setHandCard(player, begin, middle, end);
+                    object.putInt("seat", table.getSeatNo(player));
+                    if (object.getInt("result") == 0) {
+                        send("set", object, room.getUserList());
+                    } else
+                        send("set", object, user);
                 }
-            }else {
-                ArrayList<Integer> begin = (ArrayList<Integer>) isfsObject.getIntArray("head");
-                ArrayList<Integer> middle = (ArrayList<Integer>) isfsObject.getIntArray("middle");
-                ArrayList<Integer> end = (ArrayList<Integer>) isfsObject.getIntArray("tail");
-                ISFSObject object = mainGame.setHandCard(player, begin, middle, end);
-                object.putInt("seat",table.getSeatNo(player));
-                if (object.getInt("result") == 0) {
-                    send("set", object, room.getUserList());
-                }else
-                    send("set",object,user);
-            }
-        }else if ("quit".equals(cmd)){
-            if (!table.isGameStarted()){
-                getApi().leaveRoom(user,room);
-            }else {
-                if (gameExt.isExitFlag()){
-                    if (player.getGameVar().getQuit() == 1){
-                        boolean b = isfsObject.getBool("quit");
-                        if (b) {
-                            player.getGameVar().setQuit(2);
+                break;
+            case "quit":
+                if (!table.isGameStarted()) {
+                    getApi().leaveRoom(user, room);
+                } else {
+                    if (gameExt.isExitFlag()) {
+                        if (player.getGameVar().getQuit() == 1) {
+                            boolean b = isfsObject.getBool("quit");
+                            if (b) {
+                                player.getGameVar().setQuit(2);
 
-                        }else {
-                            player.getGameVar().setQuit(-1);
+                            } else {
+                                player.getGameVar().setQuit(-1);
+                            }
                         }
-                    }
-                    ISFSObject object = SFSUtil.quitInfo(table);
-                    object.putUtfString("proposer",gameExt.getProposer().getName());
-                    send("quit",object,room.getUserList());
-                    int n = 0;
-                    int m = 0;
-                    for (Seat seat : table.getSeats()){
-                        Player p = seat.getPlayer();
-                        if (p != null && p.getGameVar().getQuit() == 2)
-                            n++;
-                        if (p != null && p.getGameVar().getQuit() == -1)
-                            m++;
-                    }
-                    if (m > 0) {
+                        ISFSObject object = SFSUtil.quitInfo(table);
+                        object.putUtfString("proposer", gameExt.getProposer().getName());
+                        send("quit", object, room.getUserList());
+                        int n = 0;
+                        int m = 0;
+                        for (Seat seat : table.getSeats()) {
+                            Player p = seat.getPlayer();
+                            if (p != null && p.getGameVar().getQuit() == 2)
+                                n++;
+                            if (p != null && p.getGameVar().getQuit() == -1)
+                                m++;
+                        }
+                        if (m > 0) {
+                            for (Seat seat : table.getSeats()) {
+                                Player p = seat.getPlayer();
+                                if (p != null)
+                                    p.getGameVar().setQuit(0);
+                            }
+                            gameExt.setExitFlag(false);
+                            gameExt.cancelTimer();
+                            send("quitCancel", null, room.getUserList());
+                            return;
+                        }
+                        if (n == table.getPerson()) {
+                            gameExt.setExitFlag(false);
+                            gameExt.cancelTimer();
+                            SFSUtil.RecordGame(room);
+                            send("count", SFSUtil.gameCount(table), room.getUserList());
+                            getApi().removeRoom(room);
+                        }
+                    } else {
+                        gameExt.setExitFlag(true);
                         for (Seat seat : table.getSeats()) {
                             Player p = seat.getPlayer();
                             if (p != null)
-                                p.getGameVar().setQuit(0);
+                                p.getGameVar().setQuit(1);
                         }
-                        gameExt.setExitFlag(false);
-                        gameExt.cancelExitTimer();
-                        send("quitCancel", null, room.getUserList());
-                        return;
+                        player.getGameVar().setQuit(2);
+                        gameExt.setProposer(player);
+                        ISFSObject object = SFSUtil.quitInfo(table);
+                        object.putUtfString("proposer", gameExt.getProposer().getName());
+                        send("quit", object, room.getUserList());
+                        gameExt.getExitTimer().schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                if (gameExt.isExitFlag()) {
+                                    SFSUtil.RecordGame(room);
+                                    send("count", SFSUtil.gameCount(table), room.getUserList());
+                                    getApi().removeRoom(room);
+                                }
+                            }
+                        },Global.EXIT_TIME);
                     }
-                    if (n == table.getPerson()){
-                        gameExt.setExitFlag(false);
-                        gameExt.cancelExitTimer();
-                        SFSUtil.RecordGame(room);
-                        send("count",SFSUtil.gameCount(table),room.getUserList());
-                        getApi().removeRoom(room);
-                    }
-                }else {
-                    gameExt.setExitFlag(true);
-                    for (Seat seat : table.getSeats()){
-                        Player p = seat.getPlayer();
-                        if ( p!=null)
-                            p.getGameVar().setQuit(1);
-                    }
-                    player.getGameVar().setQuit(2);
-                    gameExt.setProposer(player);
-                    ISFSObject object = SFSUtil.quitInfo(table);
-                    object.putUtfString("proposer",gameExt.getProposer().getName());
-                    send("quit",object,room.getUserList());
-
-                    gameExt.getExitTimer().schedule(gameExt.getExitTask(),Global.EXIT_TIME);
                 }
-            }
-        }else if (cmd.equals("msg")){
-            System.out.println("收到消息");
-            getApi().sendPublicMessage(room,user,"msg",isfsObject);
-        }else if (cmd.equals("ready")){
-            if (!player.getGameVar().isReady()) {
-                player.getGameVar().setReady(true);
-                ISFSObject object = new SFSObject();
-                object.putBool("ready",true);
-                object.putInt("seat",table.getSeatNo(player));
-                send("ready",object,room.getUserList());
-            }
+                break;
+            case "msg":
+//                System.out.println("收到消息");
+                getApi().sendPublicMessage(room, user, "msg", isfsObject);
+                break;
+            case "ready":
+                if (!player.getGameVar().isReady()) {
+                    player.getGameVar().setReady(true);
+                    ISFSObject object = new SFSObject();
+                    object.putBool("ready", true);
+                    object.putInt("seat", table.getSeatNo(player));
+                    send("ready", object, room.getUserList());
+                }
+                break;
         }
 //        else if (cmd.equals("quicksort")){
 //            if (player.getGameVar().getPreSpeType() !=PaiType.none){

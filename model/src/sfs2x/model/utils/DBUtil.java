@@ -32,7 +32,7 @@ public class DBUtil {
     public static void queryGameCardAndDiamond(SFSExtension extension,Player player) {
         try {
             Connection connection = DBUtil.getConnection(ThirteenTilesDB);
-            PreparedStatement statement = connection.prepareStatement("SELECT GameCard,Diamond FROM UserInfo WHERE UserID = " + player.getUserID(),
+            PreparedStatement statement = connection.prepareStatement("SELECT GameCard,Diamond FROM UserInfo WHERE userid = " + player.getUserID(),
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
@@ -58,7 +58,7 @@ public class DBUtil {
         try {
             boolean b = false;
             Connection connection = DBUtil.getConnection(DBUtil.ThirteenTilesDB);
-            PreparedStatement statement= connection.prepareStatement("SELECT * FROM xy_user_cards WHERE UserID = "+userID,ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement statement= connection.prepareStatement("SELECT * FROM xy_user_cards WHERE userid = "+userID,ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = statement.executeQuery();
             if (rs.next())
                 b = true;
@@ -78,7 +78,7 @@ public class DBUtil {
         PreparedStatement statement = null;
         try {
             connection = DBUtil.getConnection(DBUtil.ThirteenTilesDB);
-            statement = connection.prepareStatement("UPDATE  UserInfo SET Diamond = Diamond - 20 WHERE UserID = "+player.getUserID()+" AND Diamond >= 20");
+            statement = connection.prepareStatement("UPDATE  UserInfo SET Diamond = Diamond - 18 WHERE userid = "+player.getUserID()+" AND Diamond >= 18");
             int n = statement.executeUpdate();
             if (n == 1){
                 queryGameCardAndDiamond(extension,player);
@@ -101,7 +101,7 @@ public class DBUtil {
     }
 
     //兑奖
-    public static boolean  cashLottery(int n,Player player){
+    public static boolean  cashLottery(int n,int userid){
         if (n == 0)
             return true;
         if (n < 0 || n > 10)
@@ -110,25 +110,25 @@ public class DBUtil {
         PreparedStatement stmt = null;
         try {
             if (n == 1){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 1 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 1 WHERE userid = "+userid);
             }else if (n == 2){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 2 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 2 WHERE userid = "+userid);
             }else if (n == 3){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 3 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 3 WHERE userid = "+userid);
             }else if (n == 4){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 5 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 5 WHERE userid = "+userid);
             }else if (n == 5){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 10 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET GameCard = GameCard + 10 WHERE userid = "+userid);
             }else if (n == 6){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 28 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 28 WHERE userid = "+userid);
             }else if (n == 7){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 48 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 48 WHERE userid = "+userid);
             }else if (n == 8){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 88 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 88 WHERE userid = "+userid);
             }else if (n == 9){
-                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 280 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 280 WHERE userid = "+userid);
             }else {
-                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 480 WHERE UserID = "+player.getUserID());
+                stmt = connection.prepareStatement("UPDATE UserInfo SET Diamond = UserInfo.Diamond + 480 WHERE userid = "+userid);
             }
             return stmt.executeUpdate() == 1;
         }catch (SQLException e){
@@ -156,7 +156,7 @@ public class DBUtil {
             if (rs.next()){
                 int id = rs.getInt(1);
                 statement.close();
-                statement = connection.prepareStatement("UPDATE UserInfo SET ParentID = "+id+" WHERE ParentID = 0 AND UserID = "+player.getUserID());
+                statement = connection.prepareStatement("UPDATE UserInfo SET ParentID = "+id+" WHERE ParentID = 0 AND userid = "+player.getUserID());
                 if (statement.executeUpdate() == 1) {
                     player.setAgentID(agentID);
                     object.putBool("code",true);
@@ -180,15 +180,14 @@ public class DBUtil {
     }
 
     //设置离线
-    public static boolean setOffline(Player player){
+    public static void setOffline(int userid){
         Connection connection = getConnection(ThirteenTilesDB);
         PreparedStatement statement = null;
         try {
-            statement = connection.prepareStatement("UPDATE UserInfo SET LastLogoutDate = '"+new Timestamp(System.currentTimeMillis())+"' WHERE UserID = "+player.getUserID());
-            return statement.executeUpdate() == 1;
+            statement = connection.prepareStatement("UPDATE UserInfo SET LastLogoutDate = '"+new Timestamp(System.currentTimeMillis())+"' WHERE userid = "+userid);
+            statement.executeUpdate();
         }catch (SQLException e){
             e.printStackTrace();
-            return false;
         }finally {
             try {
                 if (!connection.isClosed())

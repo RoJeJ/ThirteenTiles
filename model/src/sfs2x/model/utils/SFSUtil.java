@@ -4,18 +4,19 @@ import com.smartfoxserver.v2.entities.Room;
 import com.smartfoxserver.v2.entities.data.ISFSObject;
 import com.smartfoxserver.v2.entities.data.SFSArray;
 import com.smartfoxserver.v2.entities.data.SFSObject;
-import sfs2x.model.*;
+import sfs2x.model.Global;
+import sfs2x.model.Player;
+import sfs2x.model.Seat;
+import sfs2x.model.Table;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class SFSUtil {
 
-    public static Map<Integer,Room> offlinePlayer = new HashMap<Integer,Room>();
-    public static ArrayList<Player> ranField = new ArrayList<Player>();
+    public static Map<Integer,Room> offlinePlayer = new HashMap<>();
 
     public static void waitTime(long time){
         try {

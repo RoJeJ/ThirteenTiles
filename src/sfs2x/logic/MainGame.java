@@ -24,22 +24,32 @@ public class MainGame {
     private Table table;
     private GameState state;
     private ArrayList<Integer> pokers;
-    private Random random= new Random();
     private ISFSObject object;
     private long setPai;
     private ArrayList<Player> spec;
     private ArrayList<Player> ord;
     private long waitTime ;
-    private Player v;
     private Player e;
+    private Random random = new Random();
+    private ArrayList<Integer> ranCount;
     public MainGame(SFSExtension extension, Table table){
         this.gameExt = (GameExtension) extension;
         room = gameExt.getParentRoom();
         this.table = table;
         state = GameState.checkready;
-        pokers = new ArrayList<Integer>();
-        spec = new ArrayList<Player>();
-        ord = new ArrayList<Player>();
+        pokers = new ArrayList<>();
+        spec = new ArrayList<>();
+        ord = new ArrayList<>();
+        ranCount = new ArrayList<>();
+        ArrayList<Integer> count = new ArrayList<>();
+        for (int i=0;i<table.getCount();i++)
+            count.add(i+1);
+        for (int i=0;i<table.getCount()/6;i++){
+            int index = random.nextInt(count.size());
+            ranCount.add(count.remove(index));
+        }
+//        System.out.println(ranCount.toString());
+        gameExt.trace(ranCount.toString());
     }
 
     private boolean allReady(){
@@ -59,7 +69,7 @@ public class MainGame {
                 if(table.getPerson() == table.getPersonCount()){
 
                     if (allReady()) {
-                        System.out.println("所有人准备好");
+//                        System.out.println("所有人准备好");
                         state = GameState.readyStart;
                     }else {
                         object = new SFSObject();
@@ -125,19 +135,33 @@ public class MainGame {
                 break;
             case deal:
 
+                Player v = null;
+//                if (v != null){
+//                    analyse();
+//                }
+
                 //发牌
+                if (ranCount.contains(table.getCurCount())){
+                    for (Seat seat : table.getSeats()){
+                        Player player = seat.getPlayer();
+                        if (player != null){
+                            if (DBUtil.checkV(player.getUserID())){
+                                v = player;
+                                gameExt.trace("好牌:"+v.getName());
+                                break;
+                            }
+                        }
+                    }
+                    if (v != null){
+                        v.getGameVar().setHandCard(GameLogic.getHanCard_X(pokers));
+                        for (int pai : v.getGameVar().getHandCard())
+                            pokers.remove(Integer.valueOf(pai));
+                    }
+                }
                 for (Seat seat : table.getSeats()){
                     Player p = seat.getPlayer();
                     if (p != null){
-//                        if (table.getSeatNo(p) == 0) {
-//                            deal_thirteenStraight(p);
-//                        }
-//                        else
-//                            if (table.getSeatNo(p) == 1){
-//                            deal_thirteenStraight(p);
-//                        }
-//                        else
-                            {
+                        if (p != v){
                             for (int i = 0; i < 13; i++) {
                                 int index = random.nextInt(pokers.size());
                                 p.getGameVar().getHandCard().add(pokers.remove(index));
@@ -145,24 +169,24 @@ public class MainGame {
                         }
                     }
                 }
-                state = GameState.good_hand;
-            case good_hand:
-                v = null;
-                for (Seat seat : table.getSeats()){
-                    Player player = seat.getPlayer();
-                    if (player != null){
-                        if (DBUtil.checkV(player.getUserID())){
-                            v = player;
-                            gameExt.trace("好牌:\""+v.getName()+"\"");
-                            break;
-                        }
-                    }
-                }
-                if (v != null){
-                    analyse();
-                }
                 state = GameState.send_card;
-                break;
+//            case good_hand:
+//                v = null;
+//                for (Seat seat : table.getSeats()){
+//                    Player player = seat.getPlayer();
+//                    if (player != null){
+//                        if (DBUtil.checkV(player.getUserID())){
+//                            v = player;
+//                            gameExt.trace("好牌:\""+v.getName()+"\"");
+//                            break;
+//                        }
+//                    }
+//                }
+//                if (v != null){
+//                    analyse();
+//                }
+//                state = GameState.send_card;
+//                break;
             case send_card:
                 //发送到客户端
                     for (Seat seat : table.getSeats()){
@@ -419,8 +443,8 @@ public class MainGame {
                         long total = p.getGameVar().getTotalScore();
                         object.putInt("score",score);
                         object.putLong("total",total);
-                        System.out.println(p.getName()+"当前局结算分数:"+score);
-                        System.out.println(p.getName()+"总得分:"+total);
+//                        System.out.println(p.getName()+"当前局结算分数:"+score);
+//                        System.out.println(p.getName()+"总得分:"+total);
                         if (p.getGameVar().getPaiTypeIndex(0).type != PaiType.CT_INVALID){
                             object.putBool("spe",true);
                             object.putIntArray("0",p.getGameVar().getHandCard());
@@ -437,16 +461,16 @@ public class MainGame {
                 object.putSFSArray("jiesuan",array);
                 gameExt.send("jiesuan",object,room.getUserList());
                 waitTime = System.currentTimeMillis();
-                System.out.println("当前第"+table.getCurCount()+"把");
+//                System.out.println("当前第"+table.getCurCount()+"把");
                 if (table.getCurCount() == table.getCount()) {
                     state = GameState.end;
                 }else {
-                    System.out.println("准备下一把");
+//                    System.out.println("准备下一把");
                     state = GameState.stay;
                 }
                 break;
             case end:
-                System.out.println("游戏结束");
+//                System.out.println("游戏结束");
                 // 统计
                 SFSUtil.RecordGame(room);
                 gameExt.send("count",SFSUtil.gameCount(table),room.getUserList());
@@ -494,7 +518,7 @@ public class MainGame {
                 if (n == 1){
                     connection.commit();
                     DBUtil.queryGameCardAndDiamond(gameExt,table.getOwner());
-                    System.out.println("扣除房卡成功:房主");
+//                    System.out.println("扣除房卡成功:房主");
                     return true;
                 }else {
                     statement.close();
@@ -503,11 +527,11 @@ public class MainGame {
                     if (m == 1){
                         connection.commit();
                         DBUtil.queryGameCardAndDiamond(gameExt,table.getOwner());
-                        System.out.println("扣除钻石成功:房主");
+//                        System.out.println("扣除钻石成功:房主");
                         return true;
                     }else {
                         e = table.getOwner();
-                        System.out.println("扣费时,\""+table.getOwner().getName()+"\"房卡和钻石不足!");
+//                        System.out.println("扣费时,\""+table.getOwner().getName()+"\"房卡和钻石不足!");
                         throw new Exception("error");
                     }
                 }
@@ -535,11 +559,11 @@ public class MainGame {
                             DBUtil.queryGameCardAndDiamond(gameExt,player);
                         }
                     }
-                    System.out.println("扣除钻石成功:AA制");
+//                    System.out.println("扣除钻石成功:AA制");
                     return true;
                 }else {
                     e = b;
-                    System.out.println("扣费时,\""+b+"\"房卡和钻石不足!");
+//                    System.out.println("扣费时,\""+b+"\"房卡和钻石不足!");
                     throw new Exception("error");
                 }
             }
@@ -696,12 +720,12 @@ public class MainGame {
                     else
                         shui = 0 - Global.HEAD;
                 }
-                if (shui > 0)
-                    System.out.println("\""+p.getName()+"\"头道: 赢\""+p1.getName()+"\":"+shui);
-                if (shui < 0)
-                    System.out.println("\""+p.getName()+"\"头道: 输\""+p1.getName()+"\":"+shui);
-                if (shui == 0)
-                    System.out.println("\""+p.getName()+"\"头道: 和\""+p1.getName()+"\":"+"打和");
+//                if (shui > 0)
+////                    System.out.println("\""+p.getName()+"\"头道: 赢\""+p1.getName()+"\":"+shui);
+//                if (shui < 0)
+////                    System.out.println("\""+p.getName()+"\"头道: 输\""+p1.getName()+"\":"+shui);
+//                if (shui == 0)
+//                    System.out.println("\""+p.getName()+"\"头道: 和\""+p1.getName()+"\":"+"打和");
                 p.getGameVar().getHeadShui()[table.getSeatNo(p1)] = shui;
             }
         }
@@ -736,12 +760,12 @@ public class MainGame {
                     else
                         shui = 0 - Global.MIDDLE;
                 }
-                if (shui > 0)
-                    System.out.println("\""+p.getName()+"\"中道: 赢\""+p1.getName()+"\":"+shui);
-                if (shui < 0)
-                    System.out.println("\""+p.getName()+"\"中道: 输\""+p1.getName()+"\":"+shui);
-                if (shui == 0)
-                    System.out.println("\""+p.getName()+"\"中道: 和\""+p1.getName()+"\":"+"打和");
+//                if (shui > 0)
+//                    System.out.println("\""+p.getName()+"\"中道: 赢\""+p1.getName()+"\":"+shui);
+//                if (shui < 0)
+//                    System.out.println("\""+p.getName()+"\"中道: 输\""+p1.getName()+"\":"+shui);
+//                if (shui == 0)
+//                    System.out.println("\""+p.getName()+"\"中道: 和\""+p1.getName()+"\":"+"打和");
                 p.getGameVar().getMiddleShui()[table.getSeatNo(p1)] = shui;
             }
         }
@@ -773,12 +797,12 @@ public class MainGame {
                         shui = 0 - Global.TAIL;
                 }
 
-                if (shui > 0)
-                    System.out.println("\""+p.getName()+"\"尾道: 赢\""+p1.getName()+"\":"+shui);
-                if (shui < 0)
-                    System.out.println("\""+p.getName()+"\"尾道: 输\""+p1.getName()+"\":"+shui);
-                if (shui == 0)
-                    System.out.println("\""+p.getName()+"\"尾道: 和\""+p1.getName()+"\":"+"打和");
+//                if (shui > 0)
+//                    System.out.println("\""+p.getName()+"\"尾道: 赢\""+p1.getName()+"\":"+shui);
+//                if (shui < 0)
+//                    System.out.println("\""+p.getName()+"\"尾道: 输\""+p1.getName()+"\":"+shui);
+//                if (shui == 0)
+//                    System.out.println("\""+p.getName()+"\"尾道: 和\""+p1.getName()+"\":"+"打和");
                 p.getGameVar().getTailShui()[table.getSeatNo(p1)] = shui;
             }
         }
@@ -806,7 +830,7 @@ public class MainGame {
                     return false;
             }
         }
-        System.out.println("所有人理好牌,准备比牌");
+//        System.out.println("所有人理好牌,准备比牌");
         return true;
     }
 
@@ -818,7 +842,7 @@ public class MainGame {
                 object.putInt("result",1);//牌张数错误
                 return object;
             }
-            ArrayList<Integer> hand = new ArrayList<Integer>();
+            ArrayList<Integer> hand = new ArrayList<>();
             hand.addAll(begin);
             hand.addAll(middle);
             hand.addAll(end);
@@ -827,7 +851,7 @@ public class MainGame {
             for (int i=0;i<hand.size();i++){
                 if (hand.get(i).intValue() != player.getGameVar().getHandCard().get(i).intValue()) {
                     object.putInt("result",2);//牌面值错误
-                    System.out.println(hand.toString());
+//                    System.out.println(hand.toString());
                     System.out.println(player.getGameVar().getHandCard().toString());
                     return object;
                 }
@@ -840,7 +864,7 @@ public class MainGame {
 
     //清龙
     private void deal_thirteenStraightFlush(Player p){
-        ArrayList<Integer> a = new ArrayList<Integer>();
+        ArrayList<Integer> a = new ArrayList<>();
         a.add(0);
         a.add(4);
         a.add(8);
@@ -863,7 +887,7 @@ public class MainGame {
 
     //一条龙
     private void deal_thirteenStraight(Player p){
-        ArrayList<Integer> a = new ArrayList<Integer>();
+        ArrayList<Integer> a = new ArrayList<>();
         a.add(1);
         a.add(4);
         a.add(9);
@@ -886,7 +910,7 @@ public class MainGame {
 
     //同花顺
     private void deal_StraightFlush(Player p){
-        ArrayList<Integer> a = new ArrayList<Integer>();
+        ArrayList<Integer> a = new ArrayList<>();
         a.add(1);
         a.add(5);
         a.add(9);
@@ -947,12 +971,12 @@ public class MainGame {
             object.putInt("seat",table.getSeatNo(p));
             gameExt.send("set",object,room.getUserList());
         }else {
-            ArrayList<Integer> hand = new ArrayList<Integer>(p.getGameVar().getHandCard());
+            ArrayList<Integer> hand = new ArrayList<>(p.getGameVar().getHandCard());
             Collections.sort(hand,Collections.reverseOrder());
             GameLogic.TilesType type = GameLogic.getType(hand);
-            ArrayList<Integer> front = new ArrayList<Integer>();
-            ArrayList<Integer> mid = new ArrayList<Integer>();
-            ArrayList<Integer> back = new ArrayList<Integer>();
+            ArrayList<Integer> front = new ArrayList<>();
+            ArrayList<Integer> mid = new ArrayList<>();
+            ArrayList<Integer> back = new ArrayList<>();
             if (type.bFiveSame || type.bStraightFlush || type.bFourSame || type.bGourd || type.bFlush ||
                     type.bStraight || type.bThreeSame || type.bTwoPair ){
                 if (type.bFiveSame){
@@ -1053,105 +1077,105 @@ public class MainGame {
         }
     }
 
-    private void analyse() {
-        PaiType vSpecPai = GameLogic.getCardType(v.getGameVar().getHandCard());
-        GameLogic.TilesType vType = GameLogic.getType(v.getGameVar().getHandCard());
-        ArrayList<Integer> vBack = new ArrayList<Integer>();
-        if (vType.bFiveSame){
-            for (int i=0;i<5;i++)
-                vBack.add(vType.aFiveSame.get(i));
-            System.out.println("\""+v.getName()+"\"五同:"+vBack.toString());
-        }else if (vType.bStraightFlush){
-            for (int i=0;i<5;i++)
-                vBack.add(vType.aStraightFlush.get(i));
-            System.out.println("\""+v.getName()+"\"同花顺:"+vBack.toString());
-        }else if (vType.bFourSame){
-            for (int i=0;i<4;i++)
-                vBack.add(vType.aFourSame.get(i));
-            System.out.println("\""+v.getName()+"\"铁支:"+vBack.toString());
-        }else if (vType.bGourd){
-            for (int i=0;i<5;i++)
-                vBack.add(vType.aGourd.get(i));
-            System.out.println("\""+v.getName()+"\"葫芦:"+vBack.toString());
-        }else if (vType.bFlush){
-            for (int i=0;i<5;i++)
-                vBack.add(vType.aFlush.get(i));
-            System.out.println("\""+v.getName()+"\"同花:"+vBack.toString());
-        }else if (vType.bStraight){
-            for (int i=0;i<5;i++)
-                vBack.add(vType.aStraight.get(i));
-            System.out.println("\""+v.getName()+"\"顺子:"+vBack.toString());
-        }else if (vType.bThreeSame){
-            for (int i=0;i<3;i++)
-                vBack.add(vType.aThreeSame.get(i));
-            System.out.println("\""+v.getName()+"\"三条:"+vBack.toString());
-        }else {
-            for (int i=0;i<4;i++)
-                vBack.add(vType.aTwoPair.get(i));
-            System.out.println("\""+v.getName()+"\"两对:"+vBack.toString());
-        }
-        PaiType vPaiType = GameLogic.getCardType(vBack);
-
-        for (Seat seat : table.getSeats()){
-            Player player = seat.getPlayer();
-            if (player != null && player != v){
-                PaiType temSpecType = GameLogic.getCardType(player.getGameVar().getHandCard());
-                if (vSpecPai.compareTo(temSpecType) < 0){
-
-                    System.out.println("跟\""+player.getName()+"\"交换手牌");
-                    vSpecPai = temSpecType;
-
-                    ArrayList<Integer> tempList = v.getGameVar().getHandCard();
-                    v.getGameVar().setHandCard(player.getGameVar().getHandCard());
-                    player.getGameVar().setHandCard(tempList);
-                }else if (vSpecPai.type == PaiType.CT_INVALID && vSpecPai.compareTo(temSpecType) == 0){
-                    GameLogic.TilesType temType = GameLogic.getType(player.getGameVar().getHandCard());
-                    ArrayList<Integer> temBack = new ArrayList<Integer>();
-                    if (temType.bFiveSame){
-                        for (int i=0;i<5;i++)
-                            temBack.add(temType.aFiveSame.get(i));
-                        System.out.println("\""+player.getName()+"\"五同:"+temBack.toString());
-                    }else if (temType.bStraightFlush){
-                        for (int i=0;i<5;i++)
-                            temBack.add(temType.aStraightFlush.get(i));
-                        System.out.println("\""+player.getName()+"\"同花顺:"+temBack.toString());
-                    }else if (temType.bFourSame){
-                        for (int i=0;i<4;i++)
-                            temBack.add(temType.aFourSame.get(i));
-                        System.out.println("\""+player.getName()+"\"铁支:"+temBack.toString());
-                    }else if (temType.bGourd){
-                        for (int i=0;i<5;i++)
-                            temBack.add(temType.aGourd.get(i));
-                        System.out.println("\""+player.getName()+"\"葫芦:"+temBack.toString());
-                    }else if (temType.bFlush){
-                        for (int i=0;i<5;i++)
-                            temBack.add(temType.aFlush.get(i));
-                        System.out.println("\""+player.getName()+"\"同花:"+temBack.toString());
-                    }else if (temType.bStraight){
-                        for (int i=0;i<5;i++)
-                            temBack.add(temType.aStraight.get(i));
-                        System.out.println("\""+player.getName()+"\"顺子:"+temBack.toString());
-                    }else if (temType.bThreeSame){
-                        for (int i=0;i<3;i++)
-                            temBack.add(temType.aThreeSame.get(i));
-                        System.out.println("\""+player.getName()+"\"三条:"+temBack.toString());
-                    }else {
-                        for (int i=0;i<4;i++)
-                            temBack.add(temType.aTwoPair.get(i));
-                        System.out.println("\""+player.getName()+"\"两条:"+temBack.toString());
-                    }
-                    PaiType temPaiType = GameLogic.getCardType(temBack);
-                    if (vPaiType.compareTo(temPaiType) < 0){
-                        System.out.println("跟\""+player.getName()+"\"交换手牌");
-                        vPaiType = temPaiType;
-
-                        ArrayList<Integer> temList = v.getGameVar().getHandCard();
-                        v.getGameVar().setHandCard(player.getGameVar().getHandCard());
-                        player.getGameVar().setHandCard(temList);
-
-                    }
-                }
-            }
-        }
-    }
+//    private void analyse() {
+//        PaiType vSpecPai = GameLogic.getCardType(v.getGameVar().getHandCard());
+//        GameLogic.TilesType vType = GameLogic.getType(v.getGameVar().getHandCard());
+//        ArrayList<Integer> vBack = new ArrayList<>();
+//        if (vType.bFiveSame){
+//            for (int i=0;i<5;i++)
+//                vBack.add(vType.aFiveSame.get(i));
+//            System.out.println("\""+v.getName()+"\"五同:"+vBack.toString());
+//        }else if (vType.bStraightFlush){
+//            for (int i=0;i<5;i++)
+//                vBack.add(vType.aStraightFlush.get(i));
+//            System.out.println("\""+v.getName()+"\"同花顺:"+vBack.toString());
+//        }else if (vType.bFourSame){
+//            for (int i=0;i<4;i++)
+//                vBack.add(vType.aFourSame.get(i));
+//            System.out.println("\""+v.getName()+"\"铁支:"+vBack.toString());
+//        }else if (vType.bGourd){
+//            for (int i=0;i<5;i++)
+//                vBack.add(vType.aGourd.get(i));
+//            System.out.println("\""+v.getName()+"\"葫芦:"+vBack.toString());
+//        }else if (vType.bFlush){
+//            for (int i=0;i<5;i++)
+//                vBack.add(vType.aFlush.get(i));
+//            System.out.println("\""+v.getName()+"\"同花:"+vBack.toString());
+//        }else if (vType.bStraight){
+//            for (int i=0;i<5;i++)
+//                vBack.add(vType.aStraight.get(i));
+//            System.out.println("\""+v.getName()+"\"顺子:"+vBack.toString());
+//        }else if (vType.bThreeSame){
+//            for (int i=0;i<3;i++)
+//                vBack.add(vType.aThreeSame.get(i));
+//            System.out.println("\""+v.getName()+"\"三条:"+vBack.toString());
+//        }else {
+//            for (int i=0;i<4;i++)
+//                vBack.add(vType.aTwoPair.get(i));
+//            System.out.println("\""+v.getName()+"\"两对:"+vBack.toString());
+//        }
+//        PaiType vPaiType = GameLogic.getCardType(vBack);
+//
+//        for (Seat seat : table.getSeats()){
+//            Player player = seat.getPlayer();
+//            if (player != null && player != v){
+//                PaiType temSpecType = GameLogic.getCardType(player.getGameVar().getHandCard());
+//                if (vSpecPai.compareTo(temSpecType) < 0){
+//
+//                    System.out.println("跟\""+player.getName()+"\"交换手牌");
+//                    vSpecPai = temSpecType;
+//
+//                    ArrayList<Integer> tempList = v.getGameVar().getHandCard();
+//                    v.getGameVar().setHandCard(player.getGameVar().getHandCard());
+//                    player.getGameVar().setHandCard(tempList);
+//                }else if (vSpecPai.type == PaiType.CT_INVALID && vSpecPai.compareTo(temSpecType) == 0){
+//                    GameLogic.TilesType temType = GameLogic.getType(player.getGameVar().getHandCard());
+//                    ArrayList<Integer> temBack = new ArrayList<Integer>();
+//                    if (temType.bFiveSame){
+//                        for (int i=0;i<5;i++)
+//                            temBack.add(temType.aFiveSame.get(i));
+//                        System.out.println("\""+player.getName()+"\"五同:"+temBack.toString());
+//                    }else if (temType.bStraightFlush){
+//                        for (int i=0;i<5;i++)
+//                            temBack.add(temType.aStraightFlush.get(i));
+//                        System.out.println("\""+player.getName()+"\"同花顺:"+temBack.toString());
+//                    }else if (temType.bFourSame){
+//                        for (int i=0;i<4;i++)
+//                            temBack.add(temType.aFourSame.get(i));
+//                        System.out.println("\""+player.getName()+"\"铁支:"+temBack.toString());
+//                    }else if (temType.bGourd){
+//                        for (int i=0;i<5;i++)
+//                            temBack.add(temType.aGourd.get(i));
+//                        System.out.println("\""+player.getName()+"\"葫芦:"+temBack.toString());
+//                    }else if (temType.bFlush){
+//                        for (int i=0;i<5;i++)
+//                            temBack.add(temType.aFlush.get(i));
+//                        System.out.println("\""+player.getName()+"\"同花:"+temBack.toString());
+//                    }else if (temType.bStraight){
+//                        for (int i=0;i<5;i++)
+//                            temBack.add(temType.aStraight.get(i));
+//                        System.out.println("\""+player.getName()+"\"顺子:"+temBack.toString());
+//                    }else if (temType.bThreeSame){
+//                        for (int i=0;i<3;i++)
+//                            temBack.add(temType.aThreeSame.get(i));
+//                        System.out.println("\""+player.getName()+"\"三条:"+temBack.toString());
+//                    }else {
+//                        for (int i=0;i<4;i++)
+//                            temBack.add(temType.aTwoPair.get(i));
+//                        System.out.println("\""+player.getName()+"\"两对:"+temBack.toString());
+//                    }
+//                    PaiType temPaiType = GameLogic.getCardType(temBack);
+//                    if (vPaiType.compareTo(temPaiType) < 0){
+//                        System.out.println("跟\""+player.getName()+"\"交换手牌");
+//                        vPaiType = temPaiType;
+//
+//                        ArrayList<Integer> temList = v.getGameVar().getHandCard();
+//                        v.getGameVar().setHandCard(player.getGameVar().getHandCard());
+//                        player.getGameVar().setHandCard(temList);
+//
+//                    }
+//                }
+//            }
+//        }
+//    }
 }

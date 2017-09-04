@@ -1,9 +1,9 @@
 package sfs2x.model;
 
 
-import org.apache.commons.lang.ArrayUtils;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class GameVariable{
     private boolean ready;
@@ -45,10 +45,10 @@ public class GameVariable{
 //    }
     public GameVariable(Table table) {
         preSpeType = new PaiType(PaiType.CT_INVALID,null);
-        handCard = new ArrayList<Integer>();
-        begin = new ArrayList<Integer>();
-        middle = new ArrayList<Integer>();
-        end = new ArrayList<Integer>();
+        handCard = new ArrayList<>();
+        begin = new ArrayList<>();
+        middle = new ArrayList<>();
+        end = new ArrayList<>();
         ready = false;
         sortPai = 0;
         paiType = new PaiType[4];
@@ -94,8 +94,7 @@ public class GameVariable{
         if (shui == null)
             return 0;
         int s = 0;
-        for (int i=0;i<shui.length;i++)
-            s = s + shui[i];
+        for (int aShui : shui) s = s + aShui;
         return s;
     }
 
@@ -126,10 +125,6 @@ public class GameVariable{
         Arrays.fill(headShui,0);
         Arrays.fill(middleShui,0);
         Arrays.fill(tailShui,0);
-    }
-
-    public int getIndex(int index,ArrayList<Integer> pai){
-        return pai.get(index);
     }
 
     public boolean isReady() {

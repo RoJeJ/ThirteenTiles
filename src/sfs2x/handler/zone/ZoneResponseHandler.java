@@ -13,6 +13,7 @@ import com.smartfoxserver.v2.exceptions.SFSCreateRoomException;
 import com.smartfoxserver.v2.exceptions.SFSJoinRoomException;
 import com.smartfoxserver.v2.extensions.BaseClientRequestHandler;
 import com.smartfoxserver.v2.extensions.SFSExtension;
+import sfs2x.model.GameLogic;
 import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.Table;
@@ -30,17 +31,38 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
     public synchronized void handleClientRequest(User user, ISFSObject isfsObject) {
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
         String cmd = isfsObject.getUtfString(SFSExtension.MULTIHANDLER_REQUEST_ID);
-        if (cmd.equals("create")){
-            createRoom(user,isfsObject);
-        }else if (cmd.equals("join")){
-            joinRoom(user,isfsObject);
-        }else if (cmd.equals("ping")){
-            send("ping",null,user);
-        }else if (cmd.equals("update")){
-            DBUtil.queryGameCardAndDiamond(getParentExtension(),player);
-        }else if (cmd.equals("agent")){
-            send("agent",DBUtil.setAgent(player,isfsObject.getInt("agentID")),user);
-        }
+        switch (cmd) {
+            case "create":
+                createRoom(user, isfsObject);
+                break;
+            case "join":
+                joinRoom(user, isfsObject);
+                break;
+            case "ping":
+                send("ping", null, user);
+                break;
+            case "update":
+                DBUtil.queryGameCardAndDiamond(getParentExtension(), player);
+                break;
+            case "agent":
+                send("agent", DBUtil.setAgent(player, isfsObject.getInt("agentID")), user);
+                break;
+            case "test": {
+                ArrayList<Integer> pai = new ArrayList<>();
+                for (int i = 0; i < 52; i++)
+                    pai.add(i);
+                ISFSObject object = new SFSObject();
+                try {
+                    ArrayList<Integer> hand = GameLogic.getHanCard_X(pai);
+                    if (hand.size() != 13)
+                        throw new Exception("牌数目不对");
+                    object.putIntArray("pai", hand);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                send("deal", object, user);
+                break;
+            }
 //        else if (cmd.equals("matching")){
 //            match(user);
 //        }else if (cmd.equals("match")){
@@ -48,52 +70,56 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
 //            if (SFSUtil.ranField.contains(p))
 //                SFSUtil.ranField.remove(p);
 //        }
-        else if (cmd.equals("share")){
-            presentCard(player);
-        }else if (cmd.equals("record")){
-            send("record",SFSUtil.getGameRecord(player.getUserID()),user);
-        }else if (cmd.equals("lott")){
-            SFSObject object = new SFSObject();
-            if (DBUtil.draw(getParentExtension(),player)){
-                int zz;
-                Random random = new Random();
-                int ran = random.nextInt(10)+1;
-                if (ran <= 7){
-                    zz = 0;
-                }else if (ran == 8 || ran == 9){
-                    int ran2 = random.nextInt(10)+1;
-                    if (ran2 == 1 || ran2 == 2 || ran2 == 3){
-                        zz = 1;
-                    }else if (ran2 == 4 || ran2 == 5 || ran2 == 6){
-                        zz = 2;
-                    }else if (ran2 == 7 || ran2 == 8){
-                        zz = 3;
-                    }else if (ran2 == 9){
-                        zz = 4;
-                    }else {
-                        zz = 5;
+            case "share":
+                presentCard(player);
+                break;
+            case "record":
+                send("record", SFSUtil.getGameRecord(player.getUserID()), user);
+                break;
+            case "lott": {
+                SFSObject object = new SFSObject();
+                if (DBUtil.draw(getParentExtension(), player)) {
+                    int zz;
+                    Random random = new Random();
+                    int ran = random.nextInt(10) + 1;
+                    if (ran <= 7) {
+                        zz = 0;
+                    } else if (ran == 8 || ran == 9) {
+                        int ran2 = random.nextInt(10) + 1;
+                        if (ran2 == 1 || ran2 == 2 || ran2 == 3) {
+                            zz = 1;
+                        } else if (ran2 == 4 || ran2 == 5 || ran2 == 6) {
+                            zz = 2;
+                        } else if (ran2 == 7 || ran2 == 8) {
+                            zz = 3;
+                        } else if (ran2 == 9) {
+                            zz = 4;
+                        } else {
+                            zz = 5;
+                        }
+                    } else {
+                        int ran2 = random.nextInt(10) + 1;
+                        if (ran2 == 1 || ran2 == 2 || ran2 == 3) {
+                            zz = 6;
+                        } else if (ran2 == 4 || ran2 == 5 || ran2 == 6) {
+                            zz = 7;
+                        } else if (ran2 == 7 || ran2 == 8) {
+                            zz = 8;
+                        } else if (ran2 == 9) {
+                            zz = 9;
+                        } else {
+                            zz = 10;
+                        }
                     }
-                }else {
-                    int ran2 = random.nextInt(10)+1;
-                    if (ran2 == 1 || ran2 == 2 || ran2 == 3){
-                        zz = 6;
-                    }else if (ran2 == 4 || ran2 == 5 || ran2 == 6){
-                        zz = 7;
-                    }else if (ran2 == 7 || ran2 == 8){
-                        zz = 8;
-                    }else if (ran2 == 9){
-                        zz = 9;
-                    }else {
-                        zz = 10;
+                    if (DBUtil.cashLottery(zz, player.getUserID())) {
+                        object.putInt("lott", zz);
+                        send("lott", object, user);
                     }
+                } else {
+                    object.putInt("lott", -1);
+                    send("lott", object, user);
                 }
-                if (DBUtil.cashLottery(zz,player)){
-                    object.putInt("lott",zz);
-                    send("lott",object,user);
-                }
-            }else {
-                object.putInt("lott",-1);
-                send("lott",object,user);
+                break;
             }
         }
     }
@@ -371,7 +397,7 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
         }
 
         CreateRoomSettings createRoomSettings = new CreateRoomSettings();
-        int roomName = 0;
+        int roomName;
         if (person == 2){
             int index = new Random().nextInt(Global.roomNames2.size());
             roomName = Global.roomNames2.remove(index);
@@ -391,7 +417,7 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
         createRoomSettings.setMaxUsers(person);
         createRoomSettings.setMaxSpectators(0);
         createRoomSettings.setGame(true);
-        List<RoomVariable> list = new ArrayList<RoomVariable>();
+        List<RoomVariable> list = new ArrayList<>();
         list.add(new SFSRoomVariable("count",count));
         list.add(new SFSRoomVariable("person",person));
         list.add(new SFSRoomVariable("hong",hong));
@@ -408,10 +434,8 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
         try {
             Room room = getApi().createRoom(getParentExtension().getParentZone(),createRoomSettings,null);
             getApi().joinRoom(user,room,null,false,user.getLastJoinedRoom());
-        } catch (SFSCreateRoomException e) {
+        } catch (SFSCreateRoomException | SFSJoinRoomException e) {
             e.printStackTrace();
-        }catch (SFSJoinRoomException e1){
-            e1.printStackTrace();
         }
     }
 }

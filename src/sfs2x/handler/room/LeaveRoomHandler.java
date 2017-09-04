@@ -9,7 +9,6 @@ import com.smartfoxserver.v2.entities.data.SFSObject;
 import com.smartfoxserver.v2.exceptions.SFSException;
 import com.smartfoxserver.v2.extensions.BaseServerEventHandler;
 import sfs2x.extensions.GameExtension;
-import sfs2x.logic.MainGame;
 import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.Table;
@@ -27,7 +26,7 @@ public class LeaveRoomHandler extends BaseServerEventHandler{
 
         if (table.isGameStarted()){
             SFSUtil.offlinePlayer.put(player.getUserID(),room);
-            System.out.println("游戏中,玩家断线");
+//            System.out.println("游戏中,玩家断线");
             ISFSObject object = new SFSObject();
             object.putInt("seat",table.getSeatNo(player));
             send("offline",object,room.getUserList());

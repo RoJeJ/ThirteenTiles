@@ -1,8 +1,8 @@
 package sfs2x.extensions;
 
+import com.smartfoxserver.v2.SmartFoxServer;
 import com.smartfoxserver.v2.core.SFSEventType;
 import com.smartfoxserver.v2.entities.Room;
-import com.smartfoxserver.v2.entities.User;
 import com.smartfoxserver.v2.extensions.SFSExtension;
 import sfs2x.handler.room.DisconnectInRoom;
 import sfs2x.handler.room.JoinRoomHandler;
@@ -12,11 +12,9 @@ import sfs2x.logic.MainGame;
 import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.Table;
-import sfs2x.model.utils.DBUtil;
-import sfs2x.model.utils.SFSUtil;
 
 import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class GameExtension extends SFSExtension {
     private MainGame mainGame;
@@ -24,59 +22,26 @@ public class GameExtension extends SFSExtension {
     private Table table;
     private Player proposer;
     private Room room;
-    private Timer GameTimer;
-    private Timer waitOutTimer;
     private Timer exitTimer;
 
-    public Timer getExitTimer()
-    {
-        return this.exitTimer;
-    }
-
-    public void cancelExitTimer()
-    {
-        this.exitTimer.cancel();
-        this.exitTimer = new Timer(true);
-    }
-
-    private TimerTask task = new TimerTask()
-    {
-        public void run()
-        {
-            if (!GameExtension.this.table.isGameStarted()) {
-                GameExtension.this.getApi().removeRoom(GameExtension.this.room);
-            }
-        }
-    };
-    private TimerTask mainGameTask = new TimerTask()
+    private Runnable mainGameTask = new Runnable()
     {
         public void run()
         {
             try
             {
-                GameExtension.this.mainGame.run();
-                Thread.sleep(30L);
+                mainGame.run();
+                SmartFoxServer.getInstance().getTaskScheduler().schedule(mainGameTask,30,TimeUnit.MILLISECONDS);
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                trace(e.getMessage());
             }
         }
     };
 
-    public TimerTask getExitTask()
-    {
-        return new TimerTask() {
-            public void run()
-            {
-                if (GameExtension.this.exitFlag)
-                {
-                    SFSUtil.RecordGame(room);
-                    send("count", SFSUtil.gameCount(GameExtension.this.table), GameExtension.this.room.getUserList());
-                    GameExtension.this.getApi().removeRoom(GameExtension.this.room);
-                }
-            }
-        };
+    public Timer getExitTimer() {
+        return exitTimer;
     }
 
     public MainGame getMainGame()
@@ -86,6 +51,7 @@ public class GameExtension extends SFSExtension {
 
     @Override
     public void init() {
+        exitTimer = new Timer();
         this.room = getParentRoom();
         int count = this.room.getVariable("count").getIntValue();
         int person = this.room.getVariable("person").getIntValue();
@@ -96,13 +62,19 @@ public class GameExtension extends SFSExtension {
         this.room.setProperty("table", this.table);
         this.mainGame = new MainGame(this, this.table);
 
-        this.waitOutTimer = new Timer(true);
-        this.waitOutTimer.schedule(this.task, 600000L);
 
-        this.GameTimer = new Timer(true);
-        this.GameTimer.schedule(this.mainGameTask, 0L, 30L);
+        SmartFoxServer.getInstance().getTaskScheduler().schedule(this.mainGameTask, 30, TimeUnit.MILLISECONDS);
 
-        this.exitTimer = new Timer();
+        SmartFoxServer.getInstance().getTaskScheduler().schedule(new Runnable() {
+            @Override
+            public void run() {
+                if (!GameExtension.this.table.isGameStarted()) {
+                    GameExtension.this.getApi().removeRoom(GameExtension.this.room);
+                }
+            }
+        }, Global.WAIT_TIMEOUT,TimeUnit.MILLISECONDS);
+
+
 
         addEventHandler(SFSEventType.USER_JOIN_ROOM, JoinRoomHandler.class);
         addEventHandler(SFSEventType.USER_LEAVE_ROOM, LeaveRoomHandler.class);
@@ -114,13 +86,6 @@ public class GameExtension extends SFSExtension {
     @Override
     public void destroy() {
         trace("GameExtension is destroyed");
-        this.GameTimer.cancel();
-        this.waitOutTimer.cancel();
-        this.exitTimer.cancel();
-        for (User user: getParentZone().getUserList()){
-            Player player = (Player) user.getSession().getProperty(Global.PLAYER);
-            DBUtil.setOffline(player);
-        }
         super.destroy();
     }
 
@@ -132,6 +97,13 @@ public class GameExtension extends SFSExtension {
     public void setExitFlag(boolean exitFlag)
     {
         this.exitFlag = exitFlag;
+    }
+
+    public void cancelTimer(){
+        if (exitTimer != null) {
+            exitTimer.cancel();
+            exitTimer = new Timer();
+        }
     }
 
     public Player getProposer()

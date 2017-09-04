@@ -14,6 +14,7 @@ public class Disconnect extends BaseServerEventHandler{
     public void handleServerEvent(ISFSEvent isfsEvent) throws SFSException {
         User user = (User) isfsEvent.getParameter(SFSEventParam.USER);
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
-        DBUtil.setOffline(player);
+        player.setUser(null);
+        DBUtil.setOffline((int) user.getSession().getProperty("userid"));
     }
 }

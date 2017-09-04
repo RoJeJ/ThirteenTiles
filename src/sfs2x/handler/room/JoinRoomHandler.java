@@ -13,7 +13,6 @@ import sfs2x.logic.MainGame;
 import sfs2x.model.*;
 import sfs2x.model.utils.SFSUtil;
 
-import javax.sound.midi.Soundbank;
 
 public class JoinRoomHandler extends BaseServerEventHandler {
     @Override
@@ -26,7 +25,7 @@ public class JoinRoomHandler extends BaseServerEventHandler {
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
         int seatNo = table.getSeatNo(player);
         if (seatNo == -1){
-            System.out.println("---------->用户加入房间");
+//            System.out.println("---------->用户加入房间");
             Seat seat = table.getEmptySeat();
             if (seat != null) {
                 if (table.getPersonCount() == 0) {
@@ -51,7 +50,7 @@ public class JoinRoomHandler extends BaseServerEventHandler {
             }
         }else {
             SFSUtil.offlinePlayer.remove(player.getUserID());
-            System.out.println("---------->用户重新连接");
+//            System.out.println("---------->用户重新连接");
             send("users",SFSUtil.roomDetail(room,player),user);
 
             ISFSObject object = player.playerToSFSObject();
