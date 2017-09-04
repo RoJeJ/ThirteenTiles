@@ -228,7 +228,7 @@ public class Table {
         return curCount;
     }
 
-    public void setCurCount(int curCount) {
-        this.curCount = curCount;
+    public void nextGame() {
+        curCount++;
     }
 }

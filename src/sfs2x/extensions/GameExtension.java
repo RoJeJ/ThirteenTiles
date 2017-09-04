@@ -23,6 +23,7 @@ public class GameExtension extends SFSExtension {
     private Player proposer;
     private Room room;
     private Timer exitTimer;
+    private boolean runFlag;
 
     private Runnable mainGameTask = new Runnable()
     {
@@ -30,8 +31,10 @@ public class GameExtension extends SFSExtension {
         {
             try
             {
-                mainGame.run();
-                SmartFoxServer.getInstance().getTaskScheduler().schedule(mainGameTask,30,TimeUnit.MILLISECONDS);
+                if (runFlag){
+                    mainGame.run();
+                    SmartFoxServer.getInstance().getTaskScheduler().schedule(mainGameTask,30,TimeUnit.MILLISECONDS);
+                }
             }
             catch (Exception e)
             {
@@ -62,7 +65,7 @@ public class GameExtension extends SFSExtension {
         this.room.setProperty("table", this.table);
         this.mainGame = new MainGame(this, this.table);
 
-
+        runFlag = true;
         SmartFoxServer.getInstance().getTaskScheduler().schedule(this.mainGameTask, 30, TimeUnit.MILLISECONDS);
 
         SmartFoxServer.getInstance().getTaskScheduler().schedule(new Runnable() {
@@ -86,6 +89,7 @@ public class GameExtension extends SFSExtension {
     @Override
     public void destroy() {
         trace("GameExtension is destroyed");
+        runFlag = false;
         super.destroy();
     }
 

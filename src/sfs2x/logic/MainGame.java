@@ -44,7 +44,7 @@ public class MainGame {
         ArrayList<Integer> count = new ArrayList<>();
         for (int i=0;i<table.getCount();i++)
             count.add(i+1);
-        for (int i=0;i<table.getCount()/6;i++){
+        for (int i=0;i<table.getCount()/4;i++){
             int index = random.nextInt(count.size());
             ranCount.add(count.remove(index));
         }
@@ -94,7 +94,7 @@ public class MainGame {
             case readyStart:
                 table.setGameStarted(true);
                 object = new SFSObject();
-                table.setCurCount(table.getCurCount()+1);
+                table.nextGame();
                 object.putInt("curCount",table.getCurCount());
                 gameExt.send("start",object,room.getUserList());
                 if (table.getCurCount() == 1){
@@ -481,7 +481,6 @@ public class MainGame {
                 table.setGameStarted(false);
                 //清理房间
                 gameExt.getApi().removeRoom(room);
-                state = GameState.waitready;
                 break;
             case stay:
                 if (System.currentTimeMillis() - waitTime >= Global.WAITREADY*1000){
