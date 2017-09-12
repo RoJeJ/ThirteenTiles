@@ -9,12 +9,13 @@ import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.utils.DBUtil;
 
-import java.io.IOException;
-
-public class Disconnect extends BaseServerEventHandler{
+public class UserLogoutHandler extends BaseServerEventHandler{
     @Override
     public void handleServerEvent(ISFSEvent isfsEvent) throws SFSException {
         User user = (User) isfsEvent.getParameter(SFSEventParam.USER);
-        getApi().logout(user);
+        Player player = (Player) user.getSession().getProperty(Global.PLAYER);
+        player.setUser(null);
+        int userid = (int) user.getSession().getProperty("userid");
+        DBUtil.setLoginInFlag(userid,0);
     }
 }

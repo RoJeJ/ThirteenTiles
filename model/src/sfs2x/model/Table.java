@@ -43,7 +43,6 @@ public class Table {
             if (seats[i].getPlayer() == null) {
                 return seats[i];
             }
-        System.out.println("没有空位置");
         return null;
     }
 

@@ -1,11 +1,17 @@
 package sfs2x.extensions;
 
+import com.smartfoxserver.v2.controllers.SystemRequest;
+import com.smartfoxserver.v2.controllers.filter.ISystemFilterChain;
+import com.smartfoxserver.v2.controllers.filter.SysControllerFilterChain;
 import com.smartfoxserver.v2.core.SFSEventType;
+import com.smartfoxserver.v2.db.SFSDBManager;
 import com.smartfoxserver.v2.entities.User;
+import com.smartfoxserver.v2.entities.Zone;
 import com.smartfoxserver.v2.extensions.SFSExtension;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import sfs2x.handler.zone.*;
+import sfs2x.handler.zone.filter.JoinRoomFilter;
 import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.utils.DBUtil;
@@ -25,10 +31,14 @@ public class SanExtension extends SFSExtension {
             Global.roomNames4.add(i);
         for (int i=800000;i<900000;i++)
             Global.roomNames5.add(i);
+        getParentZone().resetSystemFilterChain();
+        ISystemFilterChain filterChain = new SysControllerFilterChain();
+        filterChain.addFilter("joinRoom",new JoinRoomFilter(getParentZone()));
+        getParentZone().setFilterChain(SystemRequest.JoinRoom,filterChain);
         addEventHandler(SFSEventType.USER_LOGIN,LoginZoneHandler.class);
         addEventHandler(SFSEventType.USER_JOIN_ZONE,ZoneJoinedHandler.class);
         addEventHandler(SFSEventType.USER_DISCONNECT,Disconnect.class);
-        addEventHandler(SFSEventType.USER_LOGOUT,Disconnect.class);
+        addEventHandler(SFSEventType.USER_LOGOUT,UserLogoutHandler.class);
         addRequestHandler("cmd",ZoneResponseHandler.class);
         addEventHandler(SFSEventType.ROOM_REMOVED,RoomRemovedHandler.class);
 }
@@ -42,10 +52,12 @@ public class SanExtension extends SFSExtension {
     @Override
     public Object handleInternalMessage(String cmdName, Object params) {
         int userID = Integer.parseInt((String) params);
-        for (User user : getParentZone().getUserList()){
-            Player player = (Player) user.getSession().getProperty(Global.PLAYER);
-            if (player.getUserID() == userID){
-                DBUtil.queryGameCardAndDiamond(this,player);
+        if (cmdName.equals("updateDia")){
+            for (User user : getParentZone().getUserList()){
+                Player player = (Player) user.getSession().getProperty(Global.PLAYER);
+                if (player.getUserID() == userID){
+                    DBUtil.queryGameCardAndDiamond(this,player);
+                }
             }
         }
         return "success";

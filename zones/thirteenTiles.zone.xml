@@ -49,72 +49,72 @@
   <disabledSystemEvents/>
   <privilegeManager active="true">
     <profiles>
-        <profile id="0">
-          <name>Guest</name>
-          <deniedRequests class="java.util.Arrays$ArrayList">
-            <a class="string-array">
-              <string>CreateRoom</string>
-              <string>PrivateMessage</string>
-              <string>SetRoomVariables</string>
-              <string>SetUserVariables</string>
-              <string>ChangeRoomName</string>
-              <string>ChangeRoomPassword</string>
-              <string>ChangeRoomCapacity</string>
-              <string>InitBuddyList</string>
-              <string>AddBuddy</string>
-              <string>BlockBuddy</string>
-              <string>RemoveBuddy</string>
-              <string>SetBuddyVariables</string>
-              <string>GoOnline</string>
-              <string>BuddyMessage</string>
-              <string>ModeratorMessage</string>
-              <string>AdminMessage</string>
-              <string>KickUser</string>
-              <string>BanUser</string>
-            </a>
-          </deniedRequests>
-          <permissionFlags/>
-        </profile>
-        <profile id="1">
-          <name>Standard</name>
-          <deniedRequests class="java.util.Arrays$ArrayList">
-            <a class="string-array">
-              <string>ModeratorMessage</string>
-              <string>AdminMessage</string>
-              <string>KickUser</string>
-              <string>BanUser</string>
-            </a>
-          </deniedRequests>
-          <permissionFlags class="java.util.Arrays$ArrayList">
-            <a class="string-array">
-              <string>ExtensionCalls</string>
-            </a>
-          </permissionFlags>
-        </profile>
-        <profile id="2">
-          <name>Moderator</name>
-          <deniedRequests class="java.util.Arrays$ArrayList">
-            <a class="string-array">
-              <string>AdminMessage</string>
-            </a>
-          </deniedRequests>
-          <permissionFlags class="java.util.Arrays$ArrayList">
-            <a class="string-array">
-              <string>ExtensionCalls</string>
-              <string>SuperUser</string>
-            </a>
-          </permissionFlags>
-        </profile>
-        <profile id="3">
-          <name>Administrator</name>
-          <deniedRequests/>
-          <permissionFlags class="java.util.Arrays$ArrayList">
-            <a class="string-array">
-              <string>ExtensionCalls</string>
-              <string>SuperUser</string>
-            </a>
-          </permissionFlags>
-        </profile>
+      <profile id="0">
+        <name>Guest</name>
+        <deniedRequests class="java.util.Arrays$ArrayList">
+          <a class="string-array">
+            <string>CreateRoom</string>
+            <string>PrivateMessage</string>
+            <string>SetRoomVariables</string>
+            <string>SetUserVariables</string>
+            <string>ChangeRoomName</string>
+            <string>ChangeRoomPassword</string>
+            <string>ChangeRoomCapacity</string>
+            <string>InitBuddyList</string>
+            <string>AddBuddy</string>
+            <string>BlockBuddy</string>
+            <string>RemoveBuddy</string>
+            <string>SetBuddyVariables</string>
+            <string>GoOnline</string>
+            <string>BuddyMessage</string>
+            <string>ModeratorMessage</string>
+            <string>AdminMessage</string>
+            <string>KickUser</string>
+            <string>BanUser</string>
+          </a>
+        </deniedRequests>
+        <permissionFlags/>
+      </profile>
+      <profile id="1">
+        <name>Standard</name>
+        <deniedRequests class="java.util.Arrays$ArrayList">
+          <a class="string-array">
+            <string>ModeratorMessage</string>
+            <string>AdminMessage</string>
+            <string>KickUser</string>
+            <string>BanUser</string>
+          </a>
+        </deniedRequests>
+        <permissionFlags class="java.util.Arrays$ArrayList">
+          <a class="string-array">
+            <string>ExtensionCalls</string>
+          </a>
+        </permissionFlags>
+      </profile>
+      <profile id="2">
+        <name>Moderator</name>
+        <deniedRequests class="java.util.Arrays$ArrayList">
+          <a class="string-array">
+            <string>AdminMessage</string>
+          </a>
+        </deniedRequests>
+        <permissionFlags class="java.util.Arrays$ArrayList">
+          <a class="string-array">
+            <string>ExtensionCalls</string>
+            <string>SuperUser</string>
+          </a>
+        </permissionFlags>
+      </profile>
+      <profile id="3">
+        <name>Administrator</name>
+        <deniedRequests/>
+        <permissionFlags class="java.util.Arrays$ArrayList">
+          <a class="string-array">
+            <string>ExtensionCalls</string>
+            <string>SuperUser</string>
+          </a>
+        </permissionFlags>
+      </profile>
     </profiles>
   </privilegeManager>
   <extension>
@@ -141,11 +141,11 @@
     <badWordsFilter isActive="false"/>
   </buddyList>
   <databaseManager active="false">
-    <driverName></driverName>
-    <connectionString></connectionString>
-    <userName></userName>
-    <password></password>
-    <testSql></testSql>
+    <driverName>com.microsoft.sqlserver.jdbc.SQLServerDriver</driverName>
+    <connectionString>jdbc:sqlserver://localhost:1433;databaseName=ThirteenTilesDB</connectionString>
+    <userName>sa</userName>
+    <password>A@b1D38DfBHm9K$%wR</password>
+    <testSql>SELECT TOP 1 * FROM UserInfo</testSql>
     <maxActiveConnections>10</maxActiveConnections>
     <maxIdleConnections>10</maxIdleConnections>
     <exhaustedPoolAction>FAIL</exhaustedPoolAction>

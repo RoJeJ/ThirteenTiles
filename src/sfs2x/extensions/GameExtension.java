@@ -43,8 +43,9 @@ public class GameExtension extends SFSExtension {
         }
     };
 
+
     public Timer getExitTimer() {
-        return exitTimer;
+        return exitTimer = new Timer();
     }
 
     public MainGame getMainGame()
@@ -78,11 +79,9 @@ public class GameExtension extends SFSExtension {
         }, Global.WAIT_TIMEOUT,TimeUnit.MILLISECONDS);
 
 
-
         addEventHandler(SFSEventType.USER_JOIN_ROOM, JoinRoomHandler.class);
         addEventHandler(SFSEventType.USER_LEAVE_ROOM, LeaveRoomHandler.class);
         addEventHandler(SFSEventType.USER_LOGOUT, DisconnectInRoom.class);
-        addEventHandler(SFSEventType.USER_DISCONNECT, DisconnectInRoom.class);
         addRequestHandler("game", RoomResponseHandler.class);
     }
 
@@ -90,6 +89,7 @@ public class GameExtension extends SFSExtension {
     public void destroy() {
         trace("GameExtension is destroyed");
         runFlag = false;
+        cancelTimer();
         super.destroy();
     }
 
@@ -106,7 +106,7 @@ public class GameExtension extends SFSExtension {
     public void cancelTimer(){
         if (exitTimer != null) {
             exitTimer.cancel();
-            exitTimer = new Timer();
+            exitTimer = null;
         }
     }
 

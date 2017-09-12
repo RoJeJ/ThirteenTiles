@@ -1372,7 +1372,7 @@ public class GameLogic {
         int ranIndex = random.nextInt(100)+1;
         if (ranIndex <= 95){//尾:葫芦
             ranIndex = random.nextInt(100)+1;
-            if (ranIndex <= 40){//中:顺子
+            if (ranIndex <= 50){//中:顺子
                 ranIndex = random.nextInt(100)+1;
                 if (ranIndex <= 95){//头:对子
 //                    System.out.println("尾:葫芦");
@@ -1459,7 +1459,7 @@ public class GameLogic {
                     }
                     return hand;
                 }
-            }else if (ranIndex <= 80){//中:同花
+            }else if (ranIndex <= 90){//中:同花
                 ranIndex = random.nextInt(100)+1;
                 if (ranIndex <= 95){//头:对子
 //                    System.out.println("尾:葫芦");

@@ -13,7 +13,6 @@ import sfs2x.model.*;
 import sfs2x.model.utils.SFSUtil;
 
 import java.util.ArrayList;
-import java.util.Timer;
 import java.util.TimerTask;
 
 @MultiHandler

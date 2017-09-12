@@ -16,6 +16,7 @@ import sfs2x.model.Global;
 import sfs2x.model.Player;
 import sfs2x.model.utils.DBUtil;
 
+import java.awt.geom.FlatteningPathIterator;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -82,7 +83,17 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                             ResultSet resultSet = stm.getResultSet();
                             if (resultSet.next()) {
                                 int nullity = resultSet.getInt("nullity");
-                                if (nullity == 0){
+                                int loggedIn = resultSet.getInt("loggedIn");
+                                if (nullity != 0){
+                                    SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_BANNED_USER);
+                                    errData.addParameter("用户被禁止登录");
+                                    throw new SFSLoginException("login refuse",errData);
+                                }
+                                if (loggedIn != 0){
+                                    SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_ALREADY_LOGGED);
+                                    errData.addParameter("已经登录");
+                                    throw new SFSLoginException("login refuse",errData);
+                                }
 //                                    Player player = new Player();
 //                                    player.setUserID(resultSet.getInt("userid"));
 //                                    player.setAgentID(resultSet.getInt("AgentID"));
@@ -94,34 +105,31 @@ public class LoginZoneHandler extends BaseServerEventHandler {
 //                                    player.setGender(resultSet.getInt("sex"));
 //                                    player.setName(resultSet.getString("nickname"));
 
-                                    session.setProperty("userid",resultSet.getInt("userid"));
-                                    session.setProperty("nickname",resultSet.getString("nickname"));
-                                    session.setProperty("sex",resultSet.getInt("sex"));
-                                    session.setProperty("faceurl",resultSet.getString("faceurl"));
-                                    session.setProperty("ip",ip);
-                                    session.setProperty("score",resultSet.getLong("score"));
-                                    session.setProperty("card",resultSet.getLong("card"));
-                                    session.setProperty("diamond",resultSet.getLong("Diamond"));
-                                    session.setProperty("agentid",resultSet.getInt("AgentID"));
+                                int userid = resultSet.getInt("userid");
+                                session.setProperty("userid",userid);
+                                session.setProperty("nickname",resultSet.getString("nickname"));
+                                session.setProperty("sex",resultSet.getInt("sex"));
+                                session.setProperty("faceurl",resultSet.getString("faceurl"));
+                                session.setProperty("ip",ip);
+                                session.setProperty("score",resultSet.getLong("score"));
+                                session.setProperty("card",resultSet.getLong("card"));
+                                session.setProperty("diamond",resultSet.getLong("Diamond"));
+                                session.setProperty("agentid",resultSet.getInt("AgentID"));
 
 //                                    session.setProperty(Global.PLAYER, player);
-                                    session.setProperty("$permission", DefaultPermissionProfile.STANDARD);
+                                session.setProperty("$permission", DefaultPermissionProfile.STANDARD);
 
-                                    String userName = String.format(nickname+"[%d]",session.getProperty("userid"));
-                                    outData.putUtfString(SFSConstants.NEW_LOGIN_NAME,userName);
-                                    resultSet.close();
-                                    return;
-                                }else {
-                                    SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_BANNED_USER);
-                                    errData.addParameter("用户被禁止登录");
-                                    throw new SFSLoginException("login refuse",new SFSErrorData(SFSErrorCode.LOGIN_BANNED_USER));
-                                }
+                                DBUtil.setLoginInFlag(userid, 1);
+                                resultSet.close();
+                                return;
                             }
                         }
                     }
                 }
             }
-            throw new SFSLoginException("login error",new SFSErrorData(SFSErrorCode.GENERIC_ERROR));
+            SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
+            errData.addParameter("登录失败");
+            throw new SFSLoginException("login error",errData);
         } catch (Exception e) {
             if (e instanceof SFSLoginException){
                 throw (SFSLoginException)e;

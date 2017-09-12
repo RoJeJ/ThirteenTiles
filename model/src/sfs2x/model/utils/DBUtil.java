@@ -27,6 +27,31 @@ public class DBUtil {
         return connection;
     }
 
+    public static void setLoginInFlag(int userid,int flag){
+        Connection connection = getConnection(ThirteenTilesDB);
+        PreparedStatement statement = null;
+        try {
+            if (flag == 1) {
+                statement = connection.prepareStatement("UPDATE UserInfo SET loggedIn = 1,LastLogonDate = getdate() WHERE loggedIn = 0 AND userid = " + userid);
+                statement.executeUpdate();
+            }else if (flag == 0){
+                statement = connection.prepareStatement("UPDATE UserInfo SET loggedIn = 0,LastLogoutDate = getdate() WHERE loggedIn = 1 AND userid = " + userid);
+                statement.executeUpdate();
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }finally {
+            try {
+                if (connection != null && !connection.isClosed())
+                    connection.close();
+                if (statement != null && !statement.isClosed())
+                    statement.close();
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     //查询房卡和钻石
     public static void queryGameCardAndDiamond(SFSExtension extension,Player player) {
@@ -41,11 +66,13 @@ public class DBUtil {
             }
             SFSObject object = new SFSObject();
             object.putLong("card", player.getGameCard());
-            extension.send("cardUpdate", object, player.getUser());
+            if (player.getUser() != null)
+                extension.send("cardUpdate", object, player.getUser());
 
             object = new SFSObject();
             object.putLong("dia", player.getDiamond());
-            extension.send("diaUpdate", object, player.getUser());
+            if (player.getUser() != null)
+                extension.send("diaUpdate", object, player.getUser());
             connection.close();
             statement.close();
             rs.close();
@@ -55,20 +82,29 @@ public class DBUtil {
     }
 
     public static boolean checkV(int userID) {
+        Connection connection = null;
+        PreparedStatement statement = null;
         try {
             boolean b = false;
-            Connection connection = DBUtil.getConnection(DBUtil.ThirteenTilesDB);
-            PreparedStatement statement= connection.prepareStatement("SELECT * FROM xy_user_cards WHERE userid = "+userID,ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY);
+            connection = DBUtil.getConnection(DBUtil.ThirteenTilesDB);
+            statement= connection.prepareStatement("SELECT * FROM xy_user_cards WHERE userid = "+userID,ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = statement.executeQuery();
             if (rs.next())
                 b = true;
-            connection.close();
-            statement.close();
             rs.close();
             return b;
         }catch (SQLException e){
             e.printStackTrace();
             return false;
+        }finally {
+            try {
+                if (connection != null && !connection.isClosed())
+                    connection.close();
+                if (statement != null && !statement.isClosed())
+                    statement.close();
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
         }
     }
 

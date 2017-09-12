@@ -239,13 +239,16 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
             send("join",object,user);
             return;
         }
-        if (room.getGroupId().equals("random")){
-            object.putBool("join",false);
-        }
         Table table = (Table) room.getProperty(Global.TABLE);
         if (table == null){
             object.putBool("join",false);
             object.putUtfString("error","加入失败,无法读取房间设置!");
+            send("join",object,user);
+            return;
+        }
+        if (table.getPerson() == table.getPersonCount() && table.getSeatNo(player) == -1){
+            object.putBool("join",false);
+            object.putUtfString("error","房间满了!");
             send("join",object,user);
             return;
         }

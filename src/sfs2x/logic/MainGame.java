@@ -68,25 +68,31 @@ public class MainGame {
             case checkready:
                 if(table.getPerson() == table.getPersonCount()){
 
-                    if (allReady()) {
-//                        System.out.println("所有人准备好");
-                        state = GameState.readyStart;
-                    }else {
+//                    if (allReady()) {
+////                        System.out.println("所有人准备好");
+//                        state = GameState.readyStart;
+//                    }else {
                         object = new SFSObject();
                         object.putInt("time",10);
                         gameExt.send("start_delay",object,room.getUserList());
                         state = GameState.waitready;
                         waitTime = System.currentTimeMillis();
-                    }
+//                    }
                 }
                 break;
             case waitready:
                 if (System.currentTimeMillis() - waitTime >= 10*1000){
-                    for (Seat seat : table.getSeats()){
-                        Player p = seat.getPlayer();
-                        if (p != null && !p.getGameVar().isReady())
-                            p.getGameVar().setReady(true);
+                    if (table.getPersonCount() == table.getPerson()){
+                        for (Seat seat : table.getSeats()){
+                            Player p = seat.getPlayer();
+                            if (p != null && !p.getGameVar().isReady())
+                                p.getGameVar().setReady(true);
+                        }
                     }
+                }
+                if (table.getPerson() != table.getPersonCount()) {
+                    state = GameState.checkready;
+                    break;
                 }
                 if (allReady())
                     state = GameState.readyStart;
@@ -105,11 +111,13 @@ public class MainGame {
                                 if (e == null || e == p){
                                     SFSObject object = new SFSObject();
                                     object.putUtfString("error","由于扣费失败,房间被强制解散!");
-                                    gameExt.send("startError",object,p.getUser());
+                                    if (p.getUser() != null)
+                                        gameExt.send("startError",object,p.getUser());
                                 }else {
                                     SFSObject object = new SFSObject();
                                     object.putUtfString("error","由于玩家\""+e.getName()+"\"扣费失败,房间被强制解散!");
-                                    gameExt.send("startError",object,p.getUser());
+                                    if (p.getUser() != null)
+                                        gameExt.send("startError",object,p.getUser());
                                 }
                             }
                         }
@@ -952,8 +960,8 @@ public class MainGame {
         }else if (state == GameState.bipai){
             object.putUtfString("state","bipai");
         }
-
-        gameExt.send("reconnect",object,player.getUser());
+        if (player.getUser() != null)
+            gameExt.send("reconnect",object,player.getUser());
     }
 
     private void removeList(ArrayList<Integer> hand,ArrayList<Integer> re){
