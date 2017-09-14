@@ -16,6 +16,7 @@ import sfs2x.model.utils.SFSUtil;
 public class DisconnectInRoom extends BaseServerEventHandler{
     @Override
     public void handleServerEvent(ISFSEvent isfsEvent) throws SFSException {
+        trace("房间内断线");
         User user = (User) isfsEvent.getParameter(SFSEventParam.USER);
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
         Room room = getParentExtension().getParentRoom();

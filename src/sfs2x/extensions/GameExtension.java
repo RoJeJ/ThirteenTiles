@@ -78,7 +78,7 @@ public class GameExtension extends SFSExtension {
             }
         }, Global.WAIT_TIMEOUT,TimeUnit.MILLISECONDS);
 
-
+        addEventHandler(SFSEventType.USER_DISCONNECT,DisconnectInRoom.class);
         addEventHandler(SFSEventType.USER_JOIN_ROOM, JoinRoomHandler.class);
         addEventHandler(SFSEventType.USER_LEAVE_ROOM, LeaveRoomHandler.class);
         addEventHandler(SFSEventType.USER_LOGOUT, DisconnectInRoom.class);
@@ -88,6 +88,10 @@ public class GameExtension extends SFSExtension {
     @Override
     public void destroy() {
         trace("GameExtension is destroyed");
+        trace("房号:"+room.getName()+",人数:"+table.getPerson()+",局数:"+table.getCount()+",当前局数:"+table.getCurCount()+",游戏中:"+table.isGameStarted());
+        if (getProposer() != null)
+            trace("有人申请解散房间:"+getProposer().getName());
+
         runFlag = false;
         cancelTimer();
         super.destroy();

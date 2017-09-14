@@ -91,6 +91,7 @@ public class RoomResponseHandler extends BaseClientRequestHandler{
                             }
                             gameExt.setExitFlag(false);
                             gameExt.cancelTimer();
+                            gameExt.setProposer(null);
                             send("quitCancel", null, room.getUserList());
                             return;
                         }

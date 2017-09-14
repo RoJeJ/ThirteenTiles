@@ -161,9 +161,23 @@ public class MainGame {
                         }
                     }
                     if (v != null){
-                        v.getGameVar().setHandCard(GameLogic.getHanCard_X(pokers));
-                        for (int pai : v.getGameVar().getHandCard())
-                            pokers.remove(Integer.valueOf(pai));
+                        ArrayList<Integer> hand;
+                       if (table.getPerson() != 5) {
+                           hand = GameLogic.getHanCard_4(pokers);
+                       }else
+                           hand = GameLogic.getHanCard_5(pokers);
+
+                        if (hand.size() != 13) {
+                            v = null;
+                            gameExt.trace("发好牌时出现错误!room:"+room.getName() +"牌:"+hand.toString());
+                        }else
+                            v.getGameVar().setHandCard(hand);
+
+                        if (v != null){
+                            for (Integer i:v.getGameVar().getHandCard())
+                                pokers.remove(i);
+                        }
+
                     }
                 }
                 for (Seat seat : table.getSeats()){
@@ -869,74 +883,74 @@ public class MainGame {
         return object;
     }
 
-    //清龙
-    private void deal_thirteenStraightFlush(Player p){
-        ArrayList<Integer> a = new ArrayList<>();
-        a.add(0);
-        a.add(4);
-        a.add(8);
-        a.add(12);
-        a.add(16);
-        a.add(20);
-        a.add(24);
-        a.add(28);
-        a.add(32);
-        a.add(36);
-        a.add(40);
-        a.add(44);
-        a.add(48);
-
-        if (pokers.removeAll(a))
-            p.getGameVar().setHandCard(a);
-        else
-            System.out.println("发牌错误!");
-    }
-
-    //一条龙
-    private void deal_thirteenStraight(Player p){
-        ArrayList<Integer> a = new ArrayList<>();
-        a.add(1);
-        a.add(4);
-        a.add(9);
-        a.add(13);
-        a.add(18);
-        a.add(21);
-        a.add(25);
-        a.add(29);
-        a.add(33);
-        a.add(37);
-        a.add(41);
-        a.add(45);
-        a.add(49);
-
-        if (pokers.removeAll(a))
-            p.getGameVar().setHandCard(a);
-        else
-            System.out.println("发牌错误!");
-    }
-
-    //同花顺
-    private void deal_StraightFlush(Player p){
-        ArrayList<Integer> a = new ArrayList<>();
-        a.add(1);
-        a.add(5);
-        a.add(9);
-        a.add(13);
-        a.add(22);
-        a.add(23);
-        a.add(25);
-        a.add(27);
-        a.add(33);
-        a.add(37);
-        a.add(41);
-        a.add(45);
-        a.add(49);
-
-        if (pokers.removeAll(a))
-            p.getGameVar().setHandCard(a);
-        else
-            System.out.println("发牌错误!");
-    }
+//    //清龙
+//    private void deal_thirteenStraightFlush(Player p){
+//        ArrayList<Integer> a = new ArrayList<>();
+//        a.add(0);
+//        a.add(4);
+//        a.add(8);
+//        a.add(12);
+//        a.add(16);
+//        a.add(20);
+//        a.add(24);
+//        a.add(28);
+//        a.add(32);
+//        a.add(36);
+//        a.add(40);
+//        a.add(44);
+//        a.add(48);
+//
+//        if (pokers.removeAll(a))
+//            p.getGameVar().setHandCard(a);
+//        else
+//            System.out.println("发牌错误!");
+//    }
+//
+//    //一条龙
+//    private void deal_thirteenStraight(Player p){
+//        ArrayList<Integer> a = new ArrayList<>();
+//        a.add(1);
+//        a.add(4);
+//        a.add(9);
+//        a.add(13);
+//        a.add(18);
+//        a.add(21);
+//        a.add(25);
+//        a.add(29);
+//        a.add(33);
+//        a.add(37);
+//        a.add(41);
+//        a.add(45);
+//        a.add(49);
+//
+//        if (pokers.removeAll(a))
+//            p.getGameVar().setHandCard(a);
+//        else
+//            System.out.println("发牌错误!");
+//    }
+//
+//    //同花顺
+//    private void deal_StraightFlush(Player p){
+//        ArrayList<Integer> a = new ArrayList<>();
+//        a.add(1);
+//        a.add(5);
+//        a.add(9);
+//        a.add(13);
+//        a.add(22);
+//        a.add(23);
+//        a.add(25);
+//        a.add(27);
+//        a.add(33);
+//        a.add(37);
+//        a.add(41);
+//        a.add(45);
+//        a.add(49);
+//
+//        if (pokers.removeAll(a))
+//            p.getGameVar().setHandCard(a);
+//        else
+//            System.out.println("发牌错误!");
+//    }
 
     public void recoverGame(Player player) {
         object = new SFSObject();

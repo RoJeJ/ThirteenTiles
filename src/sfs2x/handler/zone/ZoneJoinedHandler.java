@@ -15,8 +15,8 @@ import sfs2x.model.utils.SFSUtil;
 public class ZoneJoinedHandler extends BaseServerEventHandler{
     @Override
     public void handleServerEvent(ISFSEvent isfsEvent) throws SFSException {
-//        System.out.println("---------->用户加入到zone");
         User user = (User) isfsEvent.getParameter(SFSEventParam.USER);
+        user.setPrivilegeId((short) 2);
         int agenid = (int) user.getSession().getProperty("agentid");
         int userid = (int) user.getSession().getProperty("userid");
         if (agenid == 0)
@@ -28,7 +28,8 @@ public class ZoneJoinedHandler extends BaseServerEventHandler{
                 if (table != null){
                     Player p = table.getPlayer(userid);
                     if (p != null && p.getUser() == null){
-//                        System.out.println("---------->断线重连");
+                        trace(p.getName()+"断线重连");
+                        SFSUtil.offlinePlayer.remove(userid);
                         p.setUser(user);
                         send("user",p.playerToSFSObject(),user);
                         user.getSession().setProperty(Global.PLAYER,p);
@@ -64,6 +65,7 @@ public class ZoneJoinedHandler extends BaseServerEventHandler{
         player.setGameCard(card);
         player.setDiamond(diamond);
         player.setUser(user);
+        trace(player.getName()+"登录成功");
 
         send("user",player.playerToSFSObject(),user);
     }

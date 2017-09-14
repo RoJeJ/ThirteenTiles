@@ -15,6 +15,9 @@ public class Disconnect extends BaseServerEventHandler{
     @Override
     public void handleServerEvent(ISFSEvent isfsEvent) throws SFSException {
         User user = (User) isfsEvent.getParameter(SFSEventParam.USER);
-        getApi().logout(user);
+        Player player = (Player) user.getSession().getProperty(Global.PLAYER);
+        player.setUser(null);
+        int userid = (int) user.getSession().getProperty("userid");
+        DBUtil.setLoginInFlag(userid,0);
     }
 }

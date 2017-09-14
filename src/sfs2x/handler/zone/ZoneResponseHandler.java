@@ -53,7 +53,7 @@ public class ZoneResponseHandler extends BaseClientRequestHandler {
                     pai.add(i);
                 ISFSObject object = new SFSObject();
                 try {
-                    ArrayList<Integer> hand = GameLogic.getHanCard_X(pai);
+                    ArrayList<Integer> hand = GameLogic.getHanCard_4(pai);
                     if (hand.size() != 13)
                         throw new Exception("牌数目不对");
                     object.putIntArray("pai", hand);

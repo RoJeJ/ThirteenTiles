@@ -2,10 +2,12 @@ package sfs2x.handler.zone;
 
 import com.smartfoxserver.bitswarm.sessions.ISession;
 import com.smartfoxserver.v2.core.ISFSEvent;
-import com.smartfoxserver.v2.core.SFSConstants;
 import com.smartfoxserver.v2.core.SFSEventParam;
 import com.smartfoxserver.v2.entities.data.ISFSObject;
-import com.smartfoxserver.v2.exceptions.*;
+import com.smartfoxserver.v2.exceptions.SFSErrorCode;
+import com.smartfoxserver.v2.exceptions.SFSErrorData;
+import com.smartfoxserver.v2.exceptions.SFSException;
+import com.smartfoxserver.v2.exceptions.SFSLoginException;
 import com.smartfoxserver.v2.extensions.BaseServerEventHandler;
 import com.smartfoxserver.v2.security.DefaultPermissionProfile;
 import org.apache.http.HttpResponse;
@@ -13,10 +15,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.json.JSONObject;
 import sfs2x.extensions.SanExtension;
 import sfs2x.model.Global;
-import sfs2x.model.Player;
 import sfs2x.model.utils.DBUtil;
 
-import java.awt.geom.FlatteningPathIterator;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -35,7 +35,6 @@ public class LoginZoneHandler extends BaseServerEventHandler {
         ISession session = (ISession)isfsEvent.getParameter(SFSEventParam.SESSION);
         String ip = session.getAddress().trim();
         String url = String.format(Global.USERINFO_URI,token,openid);
-        ISFSObject outData = (ISFSObject) isfsEvent.getParameter(SFSEventParam.LOGIN_OUT_DATA);
 
         Connection con = DBUtil.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ThirteenTilesDB");
         CallableStatement stm = null;
@@ -83,17 +82,17 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                             ResultSet resultSet = stm.getResultSet();
                             if (resultSet.next()) {
                                 int nullity = resultSet.getInt("nullity");
-                                int loggedIn = resultSet.getInt("loggedIn");
+//                                int loggedIn = resultSet.getInt("loggedIn");
                                 if (nullity != 0){
                                     SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_BANNED_USER);
                                     errData.addParameter("用户被禁止登录");
                                     throw new SFSLoginException("login refuse",errData);
                                 }
-                                if (loggedIn != 0){
-                                    SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_ALREADY_LOGGED);
-                                    errData.addParameter("已经登录");
-                                    throw new SFSLoginException("login refuse",errData);
-                                }
+//                                if (loggedIn != 0){
+//                                    SFSErrorData errData = new SFSErrorData(SFSErrorCode.LOGIN_ALREADY_LOGGED);
+//                                    errData.addParameter("已经登录");
+//                                    throw new SFSLoginException("already logged",errData);
+//                                }
 //                                    Player player = new Player();
 //                                    player.setUserID(resultSet.getInt("userid"));
 //                                    player.setAgentID(resultSet.getInt("AgentID"));
@@ -118,7 +117,6 @@ public class LoginZoneHandler extends BaseServerEventHandler {
 
 //                                    session.setProperty(Global.PLAYER, player);
                                 session.setProperty("$permission", DefaultPermissionProfile.STANDARD);
-
                                 DBUtil.setLoginInFlag(userid, 1);
                                 resultSet.close();
                                 return;
@@ -127,14 +125,14 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                     }
                 }
             }
-            SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
-            errData.addParameter("登录失败");
-            throw new SFSLoginException("login error",errData);
         } catch (Exception e) {
             if (e instanceof SFSLoginException){
                 throw (SFSLoginException)e;
             }
-            e.printStackTrace();
+            trace(e.getMessage());
+            SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
+            errData.addParameter("登录失败");
+            throw new SFSLoginException("login error",errData);
         }
         finally
         {
@@ -152,6 +150,10 @@ public class LoginZoneHandler extends BaseServerEventHandler {
                 e.printStackTrace();
             }
         }
+
+        SFSErrorData errData = new SFSErrorData(SFSErrorCode.GENERIC_ERROR);
+        errData.addParameter("登录失败");
+        throw new SFSLoginException("login error",errData);
     }
 }
 

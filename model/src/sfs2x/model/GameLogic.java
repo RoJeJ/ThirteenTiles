@@ -2,7 +2,6 @@ package sfs2x.model;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -81,12 +80,6 @@ public class GameLogic {
                 type.aThreeSame.addAll(a);
             }
             if (n.get(i).size() > 3) {//铁支
-                ArrayList<Integer> tempSame = new ArrayList<>();
-                for (Integer aHand : hand) {
-                    if (aHand / 4 == i) {
-                        tempSame.add(aHand);
-                    }
-                }
                 ArrayList<Integer> a = new ArrayList<>();
                 int[] result = new int[4];
                 getCombine(a, n.get(i), 0, result, 0);
@@ -1357,7 +1350,7 @@ public class GameLogic {
         }
     }
 
-    public static ArrayList<Integer> getHanCard_X(ArrayList<Integer> pokers){
+    public static ArrayList<Integer> getHanCard_4(ArrayList<Integer> pokers){
         ArrayList<Integer> pai = new ArrayList<>(pokers);
         ArrayList<Integer> hand = new ArrayList<>();
         ArrayList<ArrayList<Integer>> nCount = new ArrayList<>();
@@ -2383,6 +2376,1352 @@ public class GameLogic {
 //                    System.out.println("头:三条");
 //                }
 //            }
+        }
+    }
+
+    public static ArrayList<Integer> getHanCard_5(ArrayList<Integer> pokers){
+        ArrayList<Integer> pai = new ArrayList<>(pokers);
+        ArrayList<Integer> hand = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> nCount = new ArrayList<>();
+        ArrayList<Integer> remainCard = new ArrayList<>();
+        for (int i=0;i<13;i++){
+            nCount.add(new ArrayList<Integer>());
+            remainCard.add(i);
+        }
+        for (Integer aPai1 : pai)
+            nCount.get(aPai1 / 4).add(aPai1);
+        Random random = new Random();
+        int ranIndex = random.nextInt(100)+1;
+        if (ranIndex <= 45){//尾:葫芦
+            ranIndex = random.nextInt(100)+1;
+            if (ranIndex <= 40){//中:顺子
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:葫芦");
+//                    System.out.println("中:顺子");
+//                    System.out.println("头:对子");
+
+                    //顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<3;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //葫芦和头道的对子
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:葫芦");
+//                    System.out.println("中:顺子");
+//                    System.out.println("头:三条");
+
+                    //顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道,头道的三条
+                    for (int i=0;i<2;i++)
+                    {
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //葫芦的一对
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<2;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    return hand;
+                }
+            }else if (ranIndex <= 85){//中:同花
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:葫芦");
+//                    System.out.println("中:同花");
+//                    System.out.println("头:对子");
+                    //同花
+                    int color = random.nextInt(4);
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color && remainCard.contains(aPai/4))
+                            flush.add(aPai);
+                    Collections.shuffle(flush);
+                    while (flush.size() > 5){
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+
+                    //三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //对子
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:葫芦");
+//                    System.out.println("中:同花");
+//                    System.out.println("头:三条");
+                    //中道同花
+                    int color = random.nextInt(4);
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color && remainCard.contains(aPai/4))
+                            flush.add(aPai);
+                    while (flush.size() > 5){
+                        Collections.shuffle(flush);
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+                    //头道,尾道的三条
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //尾道的一对
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    return hand;
+                }
+            }else {//中:葫芦
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:葫芦");
+//                    System.out.println("中:葫芦");
+//                    System.out.println("头:对子");
+
+                    //中道,尾道的三条
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //头,中,尾的一对
+                    for (int i=0;i<3;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:葫芦");
+//                    System.out.println("中:葫芦");
+//                    System.out.println("头:三条");
+
+                    //头道,中道,尾道的三条
+                    for (int i=0;i<3;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //中道尾道的对子
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    return hand;
+                }
+            }
+        }else if (ranIndex <= 75){//尾:铁支
+            ranIndex = random.nextInt(100)+1;
+            if (ranIndex <= 40){//中:顺子
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:顺子");
+//                    System.out.println("头:对子");
+                    //顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头,尾单张
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:顺子");
+//                    System.out.println("头:三条");
+                    //顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }
+
+            }else if (ranIndex <= 80){//中:同花
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:同花");
+//                    System.out.println("头:对子");
+
+                    //中道同花
+                    int color = random.nextInt(4);
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color && remainCard.contains(aPai/4))
+                            flush.add(aPai);
+                    while (flush.size() > 5){
+                        Collections.shuffle(flush);
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+
+                    //尾道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头,尾单张
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+
+                }else {//头:三条
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:同花");
+//                    System.out.println("头:三条");
+
+                    //中道同花
+                    int color = random.nextInt(4);
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color && remainCard.contains(aPai/4))
+                            flush.add(aPai);
+                    Collections.shuffle(flush);
+                    while (flush.size() > 5){
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+
+                    //尾道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<3;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }
+
+            }else if (ranIndex <= 95){//中:葫芦
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:葫芦");
+//                    System.out.println("头:对子");
+
+                    //尾道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //中道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<3;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头,中对子
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //头,尾单张
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+
+                }else {//头:三条
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:葫芦");
+//                    System.out.println("头:三条");
+
+                    //尾道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //中,头的三条
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //中道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+
+                }
+
+            }else {//中:铁支
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:铁支");
+//                    System.out.println("头:对子");
+
+                    //中道尾道的铁支
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<4;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //头,中,尾单张
+                    for (int i=0;i<3;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:铁支");
+//                    System.out.println("中:铁支");
+//                    System.out.println("头:三条");
+
+                    //中道尾道的铁支
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<4;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //中,尾单张
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+                }
+            }
+        }else if (ranIndex == 95){//尾:同花顺
+            ranIndex = random.nextInt(100)+1;
+            if (ranIndex<= 40){//中:顺子
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:顺子");
+//                    System.out.println("头:对子");
+
+
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+
+                    //顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+
+                    //头道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+
+                }else {//头:三条
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:顺子");
+//                    System.out.println("头:三条");
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+
+                    //顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+                }
+            }else if (ranIndex <= 80){//中:同花
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:同花");
+//                    System.out.println("头:对子");
+
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+
+                    //同花
+                    int color2 = random.nextInt(4);
+                    while (color2 == color){
+                        color2 = color2+1 == 4? 0:color2+1;
+                    }
+
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color2)
+                            flush.add(aPai);
+                    while (flush.size() > 5){
+                        Collections.shuffle(flush);
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+
+                    //头道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:同花");
+//                    System.out.println("头:三条");
+
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+
+                    //中道同花
+                    int color2 = random.nextInt(4);
+                    while (color2 == color){
+                        color2 = color2+1 == 4? 0:color2+1;
+                    }
+
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color2)
+                            flush.add(aPai);
+                    while (flush.size() > 5){
+                        Collections.shuffle(flush);
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    return hand;
+                }
+            }else if (ranIndex <= 95){//中:葫芦
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 95){//头:对子
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:葫芦");
+//                    System.out.println("头:对子");
+
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+
+                    //中道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //中道,头道对子
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+                    //头道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:葫芦");
+//                    System.out.println("头:三条");
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+
+                    //头,中三条
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //中道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    return hand;
+                }
+            }else{//中:铁支
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:铁支");
+//                    System.out.println("头:对子");
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+                    //铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<4;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //头,中单张
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    return hand;
+                }else {//头:三条
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:铁支");
+//                    System.out.println("头:三条");
+                    //尾道同花顺
+                    int color = random.nextInt(4);
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        nCount.get(face).remove(Integer.valueOf(face*4+ color));
+                        pai.remove(Integer.valueOf(face*4+ color));
+                        hand.add(face*4+ color);
+                    }
+                    //中道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<4;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //中道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+                    return hand;
+                }
+            }
+//            else {//中:同花顺
+//                ranIndex = random.nextInt(100)+1;
+//                if (ranIndex <= 80){//头:对子
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:同花顺");
+//                    System.out.println("头:对子");
+//                }else {//头:三条
+//                    System.out.println("尾:同花顺");
+//                    System.out.println("中:同花顺");
+//                    System.out.println("头:三条");
+//                }
+//            }
+        }else {//尾五同
+            ranIndex = random.nextInt(100)+1;
+            if (ranIndex == 40){//中同花
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex == 80){//头对子
+
+                    //中同花
+                    int color = random.nextInt(4);
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color)
+                            flush.add(aPai);
+                    Collections.shuffle(flush);
+                    while (flush.size() > 5){
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+                    return hand;
+                }else {//头三条
+                    //中同花
+                    int color = random.nextInt(4);
+                    ArrayList<Integer> flush = new ArrayList<>();
+                    for (Integer aPai : pai)
+                        if (aPai % 4 == color)
+                            flush.add(aPai);
+                    Collections.shuffle(flush);
+                    while (flush.size() > 5){
+                        flush.remove(0);
+                    }
+                    for (Integer i : flush){
+                        remainCard.remove(Integer.valueOf(i/4));
+                        nCount.get(i/4).remove(i);
+                        pai.remove(i);
+                        hand.add(i);
+                    }
+
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+                }
+            }else if (ranIndex == 80){//中顺子
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex == 80){//头对子
+                    //中道顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }else {//头三条
+                    //中道顺子
+                    ranIndex = random.nextInt(allStraight.length);
+                    int[] straight = allStraight[ranIndex];
+                    for (int face:straight){
+                        remainCard.remove(Integer.valueOf(face));
+                        Collections.shuffle(nCount.get(face));
+                        Integer cardValue = nCount.get(face).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<3;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+                }
+            }else if (ranIndex == 95){//中葫芦
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex == 80){//头对子
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //中道葫芦三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<3;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    // 头,中的对子
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        for (int j=0;j<2;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //头道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+
+                }else {//头三条
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //中,头的三条
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        for (int j=0;j<3;j++){
+                            Integer cardValue = nCount.get(ranIndex).remove(0);
+                            pai.remove(cardValue);
+                            hand.add(cardValue);
+                        }
+                    }
+
+                    //中道的对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    for (int j=0;j<2;j++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+                }
+            }else {//中铁支
+                ranIndex = random.nextInt(100)+1;
+                if (ranIndex == 80){//头对子
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //中道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //头道对子
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<2;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //中,头道单张
+                    for (int i=0;i<2;i++){
+                        ranIndex = random.nextInt(remainCard.size());
+                        ranIndex = remainCard.remove(ranIndex);
+                        Collections.shuffle(nCount.get(ranIndex));
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    return hand;
+                }else {//头三条
+                    //尾道五同
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<5;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+                    //中道铁支
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<4;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //头道三条
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    for (int i=0;i<3;i++){
+                        Integer cardValue = nCount.get(ranIndex).remove(0);
+                        pai.remove(cardValue);
+                        hand.add(cardValue);
+                    }
+
+                    //中道单张
+                    ranIndex = random.nextInt(remainCard.size());
+                    ranIndex = remainCard.remove(ranIndex);
+                    Collections.shuffle(nCount.get(ranIndex));
+                    Integer cardValue = nCount.get(ranIndex).remove(0);
+                    pai.remove(cardValue);
+                    hand.add(cardValue);
+
+                    return hand;
+                }
+            }
         }
     }
 }

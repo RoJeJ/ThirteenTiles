@@ -28,7 +28,7 @@ public class JoinRoomHandler extends BaseServerEventHandler {
         Player player = (Player) user.getSession().getProperty(Global.PLAYER);
         int seatNo = table.getSeatNo(player);
         if (seatNo == -1){
-//            System.out.println("---------->用户加入房间");
+            trace(player.getName()+"加入房间");
             Seat seat = table.getEmptySeat();
             if (seat != null) {
                 if (table.getPersonCount() == 0) {
@@ -52,8 +52,7 @@ public class JoinRoomHandler extends BaseServerEventHandler {
                 getApi().leaveRoom(user, room);
             }
         }else {
-            SFSUtil.offlinePlayer.remove(player.getUserID());
-//            System.out.println("---------->用户重新连接");
+            trace(player.getName()+"上线");
             send("users",SFSUtil.roomDetail(room,player),user);
 
             ISFSObject object = player.playerToSFSObject();
